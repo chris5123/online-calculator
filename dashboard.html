@@ -322,6 +322,12 @@
         let isClosed = item.status === '一二聯報表ok(綠)';
         let isAdmin = role.startsWith('Admin');
 
+        // 新增防呆 1：阻擋一般檢核人員開啟「已結案」資料
+        if (isClosed && !isAdmin) {
+            showToast(`⚠️ 此筆資料已結案，僅限系統管理者操作與解鎖！`);
+            return;
+        }
+
         if (item.lockedBy && item.lockedBy !== role && !isClosed && !isAdmin) {
             showToast(`⚠️ 此筆資料正由【${item.lockedBy}】檢核中！`);
             return;
@@ -396,6 +402,14 @@
         const role = document.getElementById('user-role').value;
         
         if (!role) { showToast("⚠️ 請先選擇身分"); return; }
+
+        let isAdmin = role.startsWith('Admin');
+        
+        // 新增防呆 2：如果當前畫面已經是結案狀態，且操作者非管理者，禁止再次更新
+        if (currentRecord && currentRecord.status === '一二聯報表ok(綠)' && !isAdmin) {
+            showToast("⚠️ 此筆資料已結案，僅限系統管理者解鎖！");
+            return;
+        }
 
         let lockedBy = role;
         if (newStatus === '一二聯報表ok(綠)') lockedBy = ''; 
