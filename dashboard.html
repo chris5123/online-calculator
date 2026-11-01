@@ -176,7 +176,8 @@
     let currentTxId = null;
     let currentRecord = null;
     let currentListType = null;
-    let sortOrders = { gov: 'time_desc', ref: 'time_desc' };
+    // 紀錄排序狀態 (依據與正反向)
+    let sortOrders = { gov: { by: 'time', asc: false }, ref: { by: 'time', asc: false } };
 
     // === 載入清單資料 ===
     async function fetchListData() {
@@ -212,21 +213,27 @@
             else if(isLocked) row.classList.add('locked');
 
             let badgeHtml = '';
-            if (isLocked) badgeHtml = `<span class="badge badge-warn text-[10px]" title="鎖定中">🔒${item.lockedBy}</span>`;
-            else if (item.status === '數字有誤(紅)') badgeHtml = '<span class="badge badge-err">1</span>';
-            else if (item.status === '待補正(黃)') badgeHtml = '<span class="badge badge-warn">1</span>';
-            else if (item.status === '一聯報表ok(綠)') badgeHtml = '<span class="badge badge-ok1">1</span>';
-            else if (isClosed) badgeHtml = '<span class="badge badge-ok2">1.2</span>';
+            
+            // 1. 優先繪製「檢核狀態」徽章
+            if (item.status === '數字有誤(紅)') badgeHtml += '<span class="badge badge-err">1</span>';
+            else if (item.status === '待補正(黃)') badgeHtml += '<span class="badge badge-warn">1</span>';
+            else if (item.status === '一聯報表ok(綠)') badgeHtml += '<span class="badge badge-ok1">1</span>';
+            else if (isClosed) badgeHtml += '<span class="badge badge-ok2">1.2</span>';
 
-            // 修正 Invalid Date 問題：直接抽取字串中的時間部分 (支援 "2026/10/31 下午 5:11:54" 格式)
+            // 2. 如果有人鎖定中，並排加上「鎖頭」徽章 (不覆蓋狀態)
+            if (isLocked) {
+                badgeHtml += `<span class="badge badge-warn text-[10px]" title="鎖定中">🔒${item.lockedBy}</span>`;
+            }
+
+            // 修正 Invalid Date 問題：直接抽取字串中的時間部分 (強制單行截斷)
             let timeStr = item.timestamp;
             const match = item.timestamp.match(/([上|下]午\s?\d+:\d+:\d+)/) || item.timestamp.match(/(\d+:\d+:\d+)/);
             if (match) timeStr = match[0];
             
             row.innerHTML = `
                 <div class="font-bold tracking-wider">${item.stationId}</div>
-                <div class="text-gray-700">${timeStr}</div>
-                <div class="flex justify-end">${badgeHtml}</div>
+                <div class="text-gray-700 whitespace-nowrap overflow-hidden text-ellipsis">${timeStr}</div>
+                <div class="flex justify-end gap-1">${badgeHtml}</div>
             `;
             
             row.onclick = () => loadRecord(item, type);
@@ -235,16 +242,30 @@
     }
 
     // === 排序邏輯 ===
-    function sortList(type) {
+    function sortList(type, criteria) {
         let list = rawData[`${type}List`];
-        if (sortOrders[type] === 'time_desc') {
-            list.sort((a, b) => a.stationId.localeCompare(b.stationId, undefined, {numeric: true}));
-            sortOrders[type] = 'station_asc';
+        
+        // 判斷是否連續點擊同一個欄位 (切換正反向)
+        if (sortOrders[type].by === criteria) {
+            sortOrders[type].asc = !sortOrders[type].asc;
         } else {
-            // 直接以原始字串的 localeCompare 作為排序依據，避免 new Date 報錯
-            list.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-            sortOrders[type] = 'time_desc';
+            sortOrders[type].by = criteria;
+            sortOrders[type].asc = true;
         }
+
+        let isAsc = sortOrders[type].asc;
+
+        list.sort((a, b) => {
+            if (criteria === 'station') {
+                let res = a.stationId.localeCompare(b.stationId, undefined, {numeric: true});
+                return isAsc ? res : -res;
+            } else {
+                // 預設為時間排序 (直接比較原始字串)
+                let res = b.timestamp.localeCompare(a.timestamp); 
+                return isAsc ? -res : res;
+            }
+        });
+        
         renderList(type);
     }
 
