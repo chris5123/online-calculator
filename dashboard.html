@@ -21,15 +21,16 @@
         .lists-area { flex: 1; display: flex; gap: 10px; }
         .list-box { flex: 1; background: white; border-radius: 8px; border: 1px solid #cbd5e1; display: flex; flex-direction: column; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; }
         
-        /* 清單樣式 */
-        .list-header { color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 15px; cursor: pointer; }
+        /* 清單樣式 (修正格線與時間截斷) */
+        .list-header { color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 15px; }
         .bg-gov { background-color: #1e293b; }
         .bg-ref { background-color: #0f766e; }
         .list-body { flex: 1; overflow-y: auto; }
-        .list-item { display: grid; grid-template-columns: 1fr 1.5fr auto; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; cursor: pointer; align-items: center; font-size: 14px; transition: background 0.1s; }
+        .list-item { display: grid; grid-template-columns: 1fr 1.5fr auto; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; cursor: pointer; align-items: center; font-size: 14px; transition: background 0.1s; gap: 5px; }
         .list-item:hover { background-color: #f8fafc; }
         .list-item.locked { background-color: #fef08a; } /* 黃底代表有人鎖定 */
         .list-item.closed { background-color: #e2e8f0; color: #64748b; text-decoration: line-through; } /* 結案灰底 */
+        .time-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; color: #475569; }
         
         /* 狀態徽章 */
         .badge { padding: 2px 6px; border-radius: 12px; font-size: 12px; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; min-width: 20px; }
@@ -64,6 +65,10 @@
             #print-area img { max-width: 100%; max-height: 100vh; object-fit: contain; }
             @page { size: A3 landscape; margin: 0; }
         }
+
+        /* 提示框 */
+        .toast-msg { position: fixed; bottom: 30px; right: 30px; background-color: rgba(30, 41, 59, 0.95); color: white; padding: 12px 24px; border-radius: 8px; font-size: 16px; opacity: 0; transition: opacity 0.3s; z-index: 10002; pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-weight: bold; }
+        .toast-msg.show { opacity: 1; }
     </style>
 </head>
 <body>
@@ -76,13 +81,21 @@
         <select id="user-role" class="border border-gray-400 rounded px-3 py-1 font-bold bg-white">
             <option value="">-- 請選擇身分 --</option>
             <optgroup label="檢核人員 (可鎖定與檢核)">
-                <option value="A">檢核人員 A</option><option value="B">檢核人員 B</option><option value="C">檢核人員 C</option>
+                <option value="A">檢核人員 A</option>
+                <option value="B">檢核人員 B</option>
+                <option value="C">檢核人員 C</option>
+                <option value="D">檢核人員 D</option>
+                <option value="E">檢核人員 E</option>
+                <option value="F">檢核人員 F</option>
+                <option value="G">檢核人員 G</option>
             </optgroup>
             <optgroup label="系統管理者 (可檢核與強制解鎖)">
-                <option value="AdminX">管理員 X</option><option value="AdminY">管理員 Y</option>
+                <option value="AdminX">管理員 X</option>
+                <option value="AdminY">管理員 Y</option>
             </optgroup>
         </select>
-        <button onclick="fetchListData()" class="bg-blue-100 border border-blue-400 px-3 py-1 rounded hover:bg-blue-200 font-bold shadow-sm">🔄 重新整理清單</button>
+        <!-- 修正：加上 type="button" 避免按鈕重整畫面 -->
+        <button type="button" onclick="fetchListData()" class="bg-blue-100 border border-blue-400 px-3 py-1 rounded hover:bg-blue-200 font-bold shadow-sm">🔄 重新載入清單</button>
     </div>
 </div>
 
@@ -95,7 +108,7 @@
                 <div class="flex items-center gap-3">
                     <span class="font-bold text-gray-600">調閱票所：</span>
                     <input type="text" id="current-station" class="border border-gray-300 rounded px-2 py-1 w-24 bg-gray-100 text-center font-bold text-blue-900" readonly placeholder="尚未選擇">
-                    <button onclick="printReport()" class="bg-green-600 text-white font-bold px-4 py-1 rounded hover:bg-green-700 flex items-center gap-1 shadow-sm">🖨️ 列印(A3)</button>
+                    <button type="button" onclick="printReport()" class="bg-green-600 text-white font-bold px-4 py-1 rounded hover:bg-green-700 flex items-center gap-1 shadow-sm">🖨️ 列印(A3)</button>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="font-bold text-gray-600">檢核判定：</span>
@@ -106,8 +119,8 @@
                         <option value="一聯報表ok(綠)">一聯報表ok(綠)</option>
                         <option value="一二聯報表ok(綠)">一二聯報表ok(綠)</option>
                     </select>
-                    <button onclick="updateStatus()" class="bg-blue-600 text-white font-bold px-4 py-1 rounded hover:bg-blue-700 shadow-sm">更新燈號</button>
-                    <button onclick="unlockRecord()" id="btn-unlock" class="bg-red-500 text-white font-bold px-3 py-1 rounded hover:bg-red-600 shadow-sm hidden">🔒強制解鎖</button>
+                    <button type="button" onclick="updateStatus()" class="bg-blue-600 text-white font-bold px-4 py-1 rounded hover:bg-blue-700 shadow-sm">更新燈號</button>
+                    <button type="button" onclick="unlockRecord()" id="btn-unlock" class="bg-red-500 text-white font-bold px-3 py-1 rounded hover:bg-red-600 shadow-sm hidden">🔒強制解鎖</button>
                 </div>
             </div>
             
@@ -126,18 +139,23 @@
         <div class="lists-area">
             <!-- 公職清單 -->
             <div class="list-box">
-                <div class="list-header bg-gov" onclick="sortList('gov')">已回傳報表清單 (公職) ↕</div>
+                <div class="list-header bg-gov">已回傳報表清單 (公職)</div>
+                <!-- 修正：將排序點擊區移到下方的次標題列 -->
                 <div class="flex px-3 py-1 bg-gray-100 border-b text-xs font-bold text-gray-600">
-                    <div class="flex-1">票所編號</div><div class="flex-[1.5]">回傳時間</div><div>狀態</div>
+                    <div class="flex-1 cursor-pointer hover:text-blue-600 select-none" onclick="sortList('gov', 'station')">票所編號 ↕</div>
+                    <div class="flex-[1.5] cursor-pointer hover:text-blue-600 select-none" onclick="sortList('gov', 'time')">回傳時間 ↕</div>
+                    <div>狀態</div>
                 </div>
                 <div class="list-body" id="list-gov"></div>
             </div>
             
             <!-- 公投清單 -->
             <div class="list-box">
-                <div class="list-header bg-ref" onclick="sortList('ref')">已回傳報表清單 (公投) ↕</div>
+                <div class="list-header bg-ref">已回傳報表清單 (公投)</div>
                 <div class="flex px-3 py-1 bg-gray-100 border-b text-xs font-bold text-gray-600">
-                    <div class="flex-1">票所編號</div><div class="flex-[1.5]">回傳時間</div><div>狀態</div>
+                    <div class="flex-1 cursor-pointer hover:text-blue-600 select-none" onclick="sortList('ref', 'station')">票所編號 ↕</div>
+                    <div class="flex-[1.5] cursor-pointer hover:text-blue-600 select-none" onclick="sortList('ref', 'time')">回傳時間 ↕</div>
+                    <div>狀態</div>
                 </div>
                 <div class="list-body" id="list-ref"></div>
             </div>
@@ -149,11 +167,16 @@
         <table>
             <thead>
                 <tr>
-                    <th colspan="2">選舉種類</th>
+                    <th colspan="2" rowspan="2">選舉種類</th>
                     <th colspan="14">各 候 選 人 得 票 數</th>
-                    <th>有效票數</th><th>無效票數</th><th>投票數</th>
-                    <th>已領未投</th><th>發出票數</th><th>用餘票數</th>
-                    <th>選舉人數</th><th>檢查值</th>
+                    <th rowspan="2">有效票數</th><th rowspan="2">無效票數</th><th rowspan="2">投票數</th>
+                    <th rowspan="2">已領未投</th><th rowspan="2">發出票數</th><th rowspan="2">用餘票數</th>
+                    <th rowspan="2">選舉人數</th><th rowspan="2">檢查值</th>
+                </tr>
+                <!-- 修正：增加 1-14 候選人欄位標號 -->
+                <tr>
+                    <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th>
+                    <th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th>
                 </tr>
             </thead>
             <tbody id="data-tbody">
@@ -168,6 +191,8 @@
     <img id="print-img" src="">
 </div>
 
+<div class="toast-msg" id="toast"></div>
+
 <script>
     // ⚠️ 請確保這是您最新的 API 網址 (每次重新部署可能會換新網址)
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw7-9Axst2b44keFWFllxzuLWGJPuWoVOijT1-C79K-6AkqPqEwQ6iL02zzjqlalNwhuA/exec';
@@ -179,20 +204,29 @@
     // 紀錄排序狀態 (依據與正反向)
     let sortOrders = { gov: { by: 'time', asc: false }, ref: { by: 'time', asc: false } };
 
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
     // === 載入清單資料 ===
     async function fetchListData() {
         try {
-            document.getElementById('list-gov').innerHTML = '<div class="p-4 text-center text-gray-500">載入中...</div>';
-            document.getElementById('list-ref').innerHTML = '<div class="p-4 text-center text-gray-500">載入中...</div>';
+            document.getElementById('list-gov').innerHTML = '<div class="p-4 text-center text-gray-500 font-bold">載入中...</div>';
+            document.getElementById('list-ref').innerHTML = '<div class="p-4 text-center text-gray-500 font-bold">載入中...</div>';
             
             const res = await fetch(`${GAS_API_URL}?action=getDashboardData`);
             const json = await res.json();
             if (json.status === 'success') {
                 rawData = json.data;
-                renderList('gov');
-                renderList('ref');
-            } else { alert("讀取清單失敗：" + json.message); }
-        } catch (err) { alert("網路錯誤，無法載入清單"); }
+                // 維持目前的排序方式重新渲染
+                sortList('gov', sortOrders.gov.by, true); 
+                sortList('ref', sortOrders.ref.by, true);
+                showToast("✅ 清單已更新");
+            } else { showToast("❌ 讀取清單失敗：" + json.message); }
+        } catch (err) { showToast("❌ 網路錯誤，無法載入清單"); }
     }
 
     // === 渲染清單 ===
@@ -220,20 +254,20 @@
             else if (item.status === '一聯報表ok(綠)') badgeHtml += '<span class="badge badge-ok1">1</span>';
             else if (isClosed) badgeHtml += '<span class="badge badge-ok2">1.2</span>';
 
-            // 2. 如果有人鎖定中，並排加上「鎖頭」徽章 (不覆蓋狀態)
+            // 2. 修正：如果有人鎖定中，並排加上「鎖頭」徽章 (margin-left: 4px)
             if (isLocked) {
-                badgeHtml += `<span class="badge badge-warn text-[10px]" title="鎖定中">🔒${item.lockedBy}</span>`;
+                badgeHtml += `<span class="badge badge-warn text-[10px]" title="鎖定中" style="margin-left:4px;">🔒${item.lockedBy}</span>`;
             }
 
-            // 修正 Invalid Date 問題：直接抽取字串中的時間部分 (強制單行截斷)
+            // 修正 Invalid Date 問題：直接抽取字串中的時間部分 (若失敗則直接顯示原字串)
             let timeStr = item.timestamp;
             const match = item.timestamp.match(/([上|下]午\s?\d+:\d+:\d+)/) || item.timestamp.match(/(\d+:\d+:\d+)/);
             if (match) timeStr = match[0];
             
             row.innerHTML = `
                 <div class="font-bold tracking-wider">${item.stationId}</div>
-                <div class="text-gray-700 whitespace-nowrap overflow-hidden text-ellipsis">${timeStr}</div>
-                <div class="flex justify-end gap-1">${badgeHtml}</div>
+                <div class="time-text" title="${item.timestamp}">${timeStr}</div>
+                <div class="flex justify-end items-center">${badgeHtml}</div>
             `;
             
             row.onclick = () => loadRecord(item, type);
@@ -242,21 +276,23 @@
     }
 
     // === 排序邏輯 ===
-    function sortList(type, criteria) {
+    function sortList(type, criteria, keepOrder = false) {
         let list = rawData[`${type}List`];
         
-        // 判斷是否連續點擊同一個欄位 (切換正反向)
-        if (sortOrders[type].by === criteria) {
-            sortOrders[type].asc = !sortOrders[type].asc;
-        } else {
-            sortOrders[type].by = criteria;
-            sortOrders[type].asc = true;
+        if (!keepOrder) {
+            // 判斷是否連續點擊同一個欄位 (切換正反向)
+            if (sortOrders[type].by === criteria) {
+                sortOrders[type].asc = !sortOrders[type].asc;
+            } else {
+                sortOrders[type].by = criteria;
+                sortOrders[type].asc = true;
+            }
         }
 
         let isAsc = sortOrders[type].asc;
 
         list.sort((a, b) => {
-            if (criteria === 'station') {
+            if (sortOrders[type].by === 'station') {
                 let res = a.stationId.localeCompare(b.stationId, undefined, {numeric: true});
                 return isAsc ? res : -res;
             } else {
@@ -272,13 +308,13 @@
     // === 載入並鎖定單筆紀錄 ===
     async function loadRecord(item, type) {
         const role = document.getElementById('user-role').value;
-        if (!role) { alert("⚠️ 請先於右上角選擇帳號身分，才能調閱資料！"); return; }
+        if (!role) { showToast("⚠️ 請先於右上角選擇帳號身分，才能調閱資料！"); return; }
         
         let isClosed = item.status === '一二聯報表ok(綠)';
         let isAdmin = role.startsWith('Admin');
 
         if (item.lockedBy && item.lockedBy !== role && !isClosed && !isAdmin) {
-            alert(`此筆資料正由【${item.lockedBy}】檢核中，請選擇其他票所。`);
+            showToast(`⚠️ 此筆資料正由【${item.lockedBy}】檢核中！`);
             return;
         }
 
@@ -350,6 +386,8 @@
         const newStatus = document.getElementById('status-select').value;
         const role = document.getElementById('user-role').value;
         
+        if (!role) { showToast("⚠️ 請先選擇身分"); return; }
+
         let lockedBy = role;
         if (newStatus === '一二聯報表ok(綠)') lockedBy = ''; // 結案解除鎖定
 
@@ -363,9 +401,9 @@
                 currentRecord.status = newStatus;
                 currentRecord.lockedBy = lockedBy;
                 renderList(currentListType);
-                alert("✅ 狀態已更新");
+                showToast("✅ 狀態已更新並連動至主資料表");
             }
-        } catch(e) { alert("更新失敗"); }
+        } catch(e) { showToast("❌ 更新失敗，請檢查網路"); }
     }
 
     // === 強制解鎖 ===
@@ -376,8 +414,8 @@
             currentRecord.lockedBy = '';
             renderList(currentListType);
             document.getElementById('btn-unlock').style.display = 'none';
-            alert("🔓 已強制解鎖");
-        } catch(e) { alert("解鎖失敗"); }
+            showToast("🔓 已強制解鎖");
+        } catch(e) { showToast("❌ 解鎖失敗"); }
     }
 
     // === 載入並控制 Canvas 圖檔 ===
@@ -432,7 +470,7 @@
     // === 列印功能 ===
     function printReport() {
         if (!imgElement.src || imgElement.style.display === 'none') {
-            alert("請先載入報表圖檔才能列印！"); return;
+            showToast("⚠️ 請先載入報表圖檔才能列印！"); return;
         }
         document.getElementById('print-img').src = imgElement.src;
         window.print();
