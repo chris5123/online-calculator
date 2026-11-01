@@ -26,7 +26,7 @@
         .bg-gov { background-color: #1e293b; }
         .bg-ref { background-color: #0f766e; }
         .list-body { flex: 1; overflow-y: auto; }
-        .list-item { display: grid; grid-template-columns: 1fr 1.5fr auto; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; cursor: pointer; align-items: center; font-size: 14px; transition: background 0.1s; gap: 5px; }
+        .list-item { display: flex; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; cursor: pointer; align-items: center; font-size: 14px; transition: background 0.1s; gap: 5px; }
         .list-item:hover { background-color: #f8fafc; }
         .list-item.locked { background-color: #fef08a; } /* 黃底代表有人鎖定 */
         .list-item.closed { background-color: #e2e8f0; color: #64748b; text-decoration: line-through; } /* 結案灰底 */
@@ -144,7 +144,7 @@
                 <div class="flex px-3 py-1 bg-gray-100 border-b text-xs font-bold text-gray-600">
                     <div class="flex-1 cursor-pointer hover:text-blue-600 select-none" onclick="sortList('gov', 'station')">票所編號 ↕</div>
                     <div class="flex-[1.5] cursor-pointer hover:text-blue-600 select-none" onclick="sortList('gov', 'time')">回傳時間 ↕</div>
-                    <div>狀態</div>
+                    <div class="w-12 text-right">狀態</div>
                 </div>
                 <div class="list-body" id="list-gov"></div>
             </div>
@@ -155,7 +155,7 @@
                 <div class="flex px-3 py-1 bg-gray-100 border-b text-xs font-bold text-gray-600">
                     <div class="flex-1 cursor-pointer hover:text-blue-600 select-none" onclick="sortList('ref', 'station')">票所編號 ↕</div>
                     <div class="flex-[1.5] cursor-pointer hover:text-blue-600 select-none" onclick="sortList('ref', 'time')">回傳時間 ↕</div>
-                    <div>狀態</div>
+                    <div class="w-12 text-right">狀態</div>
                 </div>
                 <div class="list-body" id="list-ref"></div>
             </div>
@@ -254,20 +254,34 @@
             else if (item.status === '一聯報表ok(綠)') badgeHtml += '<span class="badge badge-ok1">1</span>';
             else if (isClosed) badgeHtml += '<span class="badge badge-ok2">1.2</span>';
 
-            // 2. 修正：如果有人鎖定中，並排加上「鎖頭」徽章 (margin-left: 4px)
+            // 2. 如果有人鎖定中，並排加上「鎖頭」徽章
             if (isLocked) {
                 badgeHtml += `<span class="badge badge-warn text-[10px]" title="鎖定中" style="margin-left:4px;">🔒${item.lockedBy}</span>`;
             }
 
-            // 修正 Invalid Date 問題：直接抽取字串中的時間部分 (若失敗則直接顯示原字串)
+            // 3. 修正時間格式 (將 "下午 5:11:54" 轉換為 24hr 的 "17:11")
             let timeStr = item.timestamp;
-            const match = item.timestamp.match(/([上|下]午\s?\d+:\d+:\d+)/) || item.timestamp.match(/(\d+:\d+:\d+)/);
-            if (match) timeStr = match[0];
+            const ampmMatch = item.timestamp.match(/([上|下]午)\s?(\d{1,2}):(\d{2})/);
+            if (ampmMatch) {
+                let isPM = ampmMatch[1] === '下午';
+                let h = parseInt(ampmMatch[2], 10);
+                let m = ampmMatch[3];
+                if (isPM && h < 12) h += 12;
+                if (!isPM && h === 12) h = 0;
+                timeStr = `${h.toString().padStart(2, '0')}:${m}`;
+            } else {
+                // 若沒有上下午，嘗試抓取一般 24h 格式 (如 "17:11")
+                const stdMatch = item.timestamp.match(/(\d{1,2}):(\d{2})/);
+                if (stdMatch) {
+                    timeStr = `${stdMatch[1].padStart(2, '0')}:${stdMatch[2]}`;
+                }
+            }
             
+            // 使用 flexbox 對齊，保證與標題欄位完美切齊
             row.innerHTML = `
-                <div class="font-bold tracking-wider">${item.stationId}</div>
-                <div class="time-text" title="${item.timestamp}">${timeStr}</div>
-                <div class="flex justify-end items-center">${badgeHtml}</div>
+                <div class="flex-1 font-bold tracking-wider">${item.stationId}</div>
+                <div class="flex-[1.5] time-text font-mono" title="${item.timestamp}">${timeStr}</div>
+                <div class="w-12 flex justify-end items-center">${badgeHtml}</div>
             `;
             
             row.onclick = () => loadRecord(item, type);
@@ -410,11 +424,16 @@
     async function unlockRecord() {
         if (!currentTxId) return;
         try {
-            await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateStatus', txId: currentTxId, lockedBy: '' }) });
+            // 送出狀態為空字串，連帶重置狀態
+            await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateStatus', txId: currentTxId, lockedBy: '', status: '' }) });
+            
             currentRecord.lockedBy = '';
+            currentRecord.status = ''; // 重置前端本地狀態
+            document.getElementById('status-select').value = ''; // 將下拉選單重置為尚未判定
+            
             renderList(currentListType);
             document.getElementById('btn-unlock').style.display = 'none';
-            showToast("🔓 已強制解鎖");
+            showToast("🔓 已強制解鎖並清除檢核狀態");
         } catch(e) { showToast("❌ 解鎖失敗"); }
     }
 
