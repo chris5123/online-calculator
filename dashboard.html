@@ -309,6 +309,12 @@
             if (sortOrders[type].by === 'station') {
                 let res = a.stationId.localeCompare(b.stationId, undefined, {numeric: true});
                 return isAsc ? res : -res;
+            } else if (sortOrders[type].by === 'status') {
+                // 依照狀態文字排序
+                let valA = a.status || "";
+                let valB = b.status || "";
+                let res = valA.localeCompare(valB);
+                return isAsc ? res : -res;
             } else {
                 // 預設為時間排序 (直接比較原始字串)
                 let res = b.timestamp.localeCompare(a.timestamp); 
