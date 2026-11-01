@@ -11,7 +11,7 @@
         /* 頂部列 */
         .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background-color: white; border-bottom: 2px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); z-index: 10; }
         
-        /* 主要版面分割 (上半部左右，下半部表格) */
+        /* 主要版面分割 */
         .main-content { display: flex; flex-direction: column; flex: 1; overflow: hidden; padding: 15px; gap: 15px; }
         .top-section { display: flex; flex: 3; gap: 15px; min-height: 40vh; }
         .bottom-section { flex: 2; background: white; border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: auto; padding: 10px; }
@@ -20,28 +20,6 @@
         .canvas-area { flex: 2; background: white; border-radius: 8px; border: 1px solid #cbd5e1; display: flex; flex-direction: column; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; }
         .lists-area { flex: 1; display: flex; gap: 10px; }
         .list-box { flex: 1; background: white; border-radius: 8px; border: 1px solid #cbd5e1; display: flex; flex-direction: column; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; }
-        
-        /* ========================================================= */
-        /* 清單網格樣式 (CSS Grid 強制三欄對齊，解決擠壓問題) */
-        /* ========================================================= */
-        .list-header { color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 15px; }
-        .bg-gov { background-color: #1e293b; }
-        .bg-ref { background-color: #0f766e; }
-        
-        /* 定義三欄：票所(1份寬度)、時間(1份寬度)、狀態(固定 60px) */
-        .list-grid { display: grid; grid-template-columns: 1fr 1fr 60px; gap: 8px; align-items: center; width: 100%; }
-        
-        .list-body { flex: 1; overflow-y: auto; }
-        .list-item { 
-            display: grid; grid-template-columns: 1fr 1fr 60px; gap: 8px; align-items: center;
-            padding: 8px 10px; border-bottom: 1px solid #e2e8f0; cursor: pointer; 
-            font-size: 14px; transition: background 0.1s; 
-        }
-        .list-item:hover { background-color: #f8fafc; }
-        .list-item.locked { background-color: #fef08a; } /* 黃底代表有人鎖定 */
-        .list-item.closed { background-color: #e2e8f0; color: #64748b; text-decoration: line-through; } /* 結案灰底 */
-        
-        .time-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; color: #475569; }
         
         /* 狀態徽章 */
         .badge { padding: 2px 6px; border-radius: 12px; font-size: 12px; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; min-width: 20px; }
@@ -59,7 +37,7 @@
         .zoom-btn { background: white; border: 1px solid #94a3b8; border-radius: 6px; width: 36px; height: 36px; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .zoom-btn:active { background: #e2e8f0; }
 
-        /* 數據表格樣式 (復刻試算器) */
+        /* 數據表格樣式 */
         table { width: 100%; border-collapse: collapse; text-align: center; white-space: nowrap; }
         th, td { border: 1px solid #94a3b8; padding: 4px; font-size: 13px; }
         th { background-color: #f1f5f9; font-weight: bold; position: sticky; top: 0; z-index: 5; }
@@ -84,7 +62,6 @@
 </head>
 <body>
 
-<!-- 頂部身分列 -->
 <div class="top-bar">
     <h1 class="text-xl font-bold text-gray-800">📊 後端 Canvas 調閱系統</h1>
     <div class="flex items-center gap-3">
@@ -105,13 +82,11 @@
                 <option value="AdminY">管理員 Y</option>
             </optgroup>
         </select>
-        <!-- 修正：加上 type="button" 避免按鈕重整畫面，保留身分選取 -->
         <button type="button" onclick="fetchListData()" class="bg-blue-100 border border-blue-400 px-3 py-1 rounded hover:bg-blue-200 font-bold shadow-sm">🔄 重新載入清單</button>
     </div>
 </div>
 
 <div class="main-content">
-    <!-- 上半部 -->
     <div class="top-section">
         <!-- Canvas 看圖區 -->
         <div class="canvas-area">
@@ -131,7 +106,6 @@
                         <option value="一二聯報表ok(綠)">一二聯報表ok(綠)</option>
                     </select>
                     <button type="button" onclick="updateStatus()" class="bg-blue-600 text-white font-bold px-4 py-1 rounded hover:bg-blue-700 shadow-sm">更新燈號</button>
-                    <!-- 強制解鎖按鈕 -->
                     <button type="button" onclick="unlockRecord()" id="btn-unlock" class="bg-red-500 text-white font-bold px-3 py-1 rounded hover:bg-red-600 shadow-sm hidden">🔒強制解鎖</button>
                 </div>
             </div>
@@ -149,28 +123,22 @@
 
         <!-- 清單區 -->
         <div class="lists-area">
-            <!-- 公職清單 -->
+            <!-- 公職清單 (全面導入 Tailwind Grid，嚴格切分三欄) -->
             <div class="list-box">
-                <div class="list-header bg-gov">已回傳報表清單 (公職)</div>
-                <!-- 修正：使用 Grid 強制切齊三欄 -->
-                <div class="list-grid px-3 py-1 bg-gray-100 border-b text-xs font-bold text-gray-600">
-                    <div class="cursor-pointer hover:text-blue-600 select-none text-left" onclick="sortList('gov', 'station')">票所編號 ↕</div>
-                    <div class="cursor-pointer hover:text-blue-600 select-none text-left" onclick="sortList('gov', 'time')">回傳時間 ↕</div>
-                    <div class="cursor-pointer hover:text-blue-600 select-none text-right" onclick="sortList('gov', 'status')">狀態 ↕</div>
+                <div class="bg-slate-800 text-white p-2 text-center font-bold text-sm">已回傳報表清單 (公職)</div>
+                <div id="header-gov" class="grid grid-cols-[1fr_1fr_60px] gap-2 items-center px-3 py-1 bg-gray-100 border-b text-xs font-bold text-gray-600">
+                    <!-- 內容由 JS 動態產生，以支援排序箭頭 -->
                 </div>
-                <div class="list-body" id="list-gov"></div>
+                <div class="flex-1 overflow-y-auto bg-white" id="list-gov"></div>
             </div>
             
             <!-- 公投清單 -->
             <div class="list-box">
-                <div class="list-header bg-ref">已回傳報表清單 (公投)</div>
-                <!-- 修正：使用 Grid 強制切齊三欄 -->
-                <div class="list-grid px-3 py-1 bg-gray-100 border-b text-xs font-bold text-gray-600">
-                    <div class="cursor-pointer hover:text-blue-600 select-none text-left" onclick="sortList('ref', 'station')">票所編號 ↕</div>
-                    <div class="cursor-pointer hover:text-blue-600 select-none text-left" onclick="sortList('ref', 'time')">回傳時間 ↕</div>
-                    <div class="cursor-pointer hover:text-blue-600 select-none text-right" onclick="sortList('ref', 'status')">狀態 ↕</div>
+                <div class="bg-teal-700 text-white p-2 text-center font-bold text-sm">已回傳報表清單 (公投)</div>
+                <div id="header-ref" class="grid grid-cols-[1fr_1fr_60px] gap-2 items-center px-3 py-1 bg-gray-100 border-b text-xs font-bold text-gray-600">
+                    <!-- 內容由 JS 動態產生，以支援排序箭頭 -->
                 </div>
-                <div class="list-body" id="list-ref"></div>
+                <div class="flex-1 overflow-y-auto bg-white" id="list-ref"></div>
             </div>
         </div>
     </div>
@@ -186,7 +154,6 @@
                     <th rowspan="2">已領未投</th><th rowspan="2">發出票數</th><th rowspan="2">用餘票數</th>
                     <th rowspan="2">選舉人數</th><th rowspan="2">檢查值</th>
                 </tr>
-                <!-- 修正：增加 1-14 候選人欄位標號 -->
                 <tr>
                     <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th>
                     <th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th>
@@ -199,22 +166,18 @@
     </div>
 </div>
 
-<!-- 列印專用區塊 -->
-<div id="print-area" style="display:none;">
-    <img id="print-img" src="">
-</div>
-
+<div id="print-area" style="display:none;"><img id="print-img" src=""></div>
 <div class="toast-msg" id="toast"></div>
 
 <script>
-    // ⚠️ 請確保這是您最新的 API 網址 (每次重新部署可能會換新網址)
+    // ⚠️ 請確保這是您最新的 API 網址
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw7-9Axst2b44keFWFllxzuLWGJPuWoVOijT1-C79K-6AkqPqEwQ6iL02zzjqlalNwhuA/exec';
     
     let rawData = { govList: [], refList: [] };
     let currentTxId = null;
     let currentRecord = null;
     let currentListType = null;
-    // 紀錄排序狀態 (依據與正反向)
+    // 預設排序：時間新到舊
     let sortOrders = { gov: { by: 'time', asc: false }, ref: { by: 'time', asc: false } };
 
     function showToast(msg) {
@@ -224,7 +187,6 @@
         setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    // === 載入清單資料 ===
     async function fetchListData() {
         try {
             document.getElementById('list-gov').innerHTML = '<div class="p-4 text-center text-gray-500 font-bold">載入中...</div>';
@@ -234,7 +196,6 @@
             const json = await res.json();
             if (json.status === 'success') {
                 rawData = json.data;
-                // 維持目前的排序方式重新渲染
                 sortList('gov', sortOrders.gov.by, true); 
                 sortList('ref', sortOrders.ref.by, true);
                 showToast("✅ 清單已更新");
@@ -242,57 +203,81 @@
         } catch (err) { showToast("❌ 網路錯誤，無法載入清單"); }
     }
 
-    // === 渲染清單 ===
+    // 取得排序圖示
+    function getSortIcon(type, criteria) {
+        if (sortOrders[type].by === criteria) {
+            return sortOrders[type].asc ? '↑' : '↓';
+        }
+        return '↕';
+    }
+
+    // === 渲染清單 (全面採用 Tailwind CSS Grid) ===
     function renderList(type) {
         const container = document.getElementById(`list-${type}`);
+        const headerContainer = document.getElementById(`header-${type}`);
         container.innerHTML = '';
         
+        // 重新繪製帶有排序箭頭的表頭
+        headerContainer.innerHTML = `
+            <div class="cursor-pointer hover:text-blue-600 select-none text-left" onclick="sortList('${type}', 'station')">票所編號 ${getSortIcon(type, 'station')}</div>
+            <div class="cursor-pointer hover:text-blue-600 select-none text-center" onclick="sortList('${type}', 'time')">回傳時間 ${getSortIcon(type, 'time')}</div>
+            <div class="cursor-pointer hover:text-blue-600 select-none text-right" onclick="sortList('${type}', 'status')">狀態 ${getSortIcon(type, 'status')}</div>
+        `;
+
         let list = rawData[`${type}List`];
         
         list.forEach(item => {
             const row = document.createElement('div');
-            row.className = 'list-item'; // 使用 grid 類別
+            
+            // 🚨 強制啟用 Grid 排版：1fr (編號), 1fr (時間), 60px (狀態)
+            row.className = 'grid grid-cols-[1fr_1fr_60px] gap-2 items-center px-3 py-2 border-b border-gray-200 cursor-pointer text-sm transition-colors hover:bg-slate-50';
             
             let isClosed = item.status === '一二聯報表ok(綠)';
             let isLocked = item.lockedBy && item.lockedBy !== '' && !isClosed;
             
-            if(isClosed) row.classList.add('closed');
-            else if(isLocked) row.classList.add('locked');
+            if(isClosed) {
+                // 結案狀態：灰色底、灰色字、刪除線
+                row.classList.add('bg-slate-200', 'text-slate-500', 'line-through');
+            } else if(isLocked) {
+                // 處理中狀態：黃色底
+                row.classList.add('bg-yellow-100');
+            }
 
             let badgeHtml = '';
-            
-            // 1. 優先繪製「檢核狀態」徽章
+            // 繪製檢核燈號
             if (item.status === '數字有誤(紅)') badgeHtml += '<span class="badge badge-err">1</span>';
             else if (item.status === '待補正(黃)') badgeHtml += '<span class="badge badge-warn">1</span>';
             else if (item.status === '一聯報表ok(綠)') badgeHtml += '<span class="badge badge-ok1">1</span>';
             else if (isClosed) badgeHtml += '<span class="badge badge-ok2">1.2</span>';
 
-            // 2. 如果有人鎖定中，並排加上「鎖頭」徽章
+            // 並排繪製鎖頭 (若有人鎖定)
             if (isLocked) {
                 badgeHtml += `<span class="badge badge-warn text-[10px]" title="鎖定中" style="margin-left:4px;">🔒${item.lockedBy}</span>`;
             }
 
-            // 3. 修正時間格式 (強制萃取成 24 小時制的 HH:MM)
+            // 萃取純淨的 24 小時制時間 (HH:MM)
             let timeStr = item.timestamp;
-            const ampmMatch = item.timestamp.match(/([上|下]午)\s?(\d{1,2}):(\d{2})/);
-            if (ampmMatch) {
-                let isPM = ampmMatch[1] === '下午';
-                let h = parseInt(ampmMatch[2], 10);
-                let m = ampmMatch[3];
-                if (isPM && h < 12) h += 12;
-                if (!isPM && h === 12) h = 0;
-                timeStr = `${h.toString().padStart(2, '0')}:${m}`;
-            } else {
-                const stdMatch = item.timestamp.match(/(\d{1,2}):(\d{2})/);
-                if (stdMatch) {
-                    timeStr = `${stdMatch[1].padStart(2, '0')}:${stdMatch[2]}`;
+            try {
+                const ampmMatch = item.timestamp.match(/(上午|下午)\s?(\d{1,2}):(\d{2})/);
+                if (ampmMatch) {
+                    let isPM = ampmMatch[1] === '下午';
+                    let h = parseInt(ampmMatch[2], 10);
+                    let m = ampmMatch[3];
+                    if (isPM && h < 12) h += 12;
+                    if (!isPM && h === 12) h = 0;
+                    timeStr = `${h.toString().padStart(2, '0')}:${m}`;
+                } else {
+                    const stdMatch = item.timestamp.match(/(\d{1,2}):(\d{2})/);
+                    if (stdMatch) {
+                        timeStr = `${stdMatch[1].padStart(2, '0')}:${stdMatch[2]}`;
+                    }
                 }
-            }
+            } catch(e) {}
             
-            // 填入內部 HTML (因為 row 本身已經設定為 Grid，所以內部直接放三個 div)
+            // 🚨 嚴格對應 Grid 的 3 個區塊：左對齊(編號)、置中對齊(時間)、右對齊(徽章)
             row.innerHTML = `
-                <div class="font-bold tracking-wider text-left">${item.stationId}</div>
-                <div class="time-text font-mono text-left" title="${item.timestamp}">${timeStr}</div>
+                <div class="font-bold tracking-wider text-left truncate">${item.stationId}</div>
+                <div class="font-mono text-center truncate ${isClosed ? 'text-slate-500' : 'text-slate-600'}" title="${item.timestamp}">${timeStr}</div>
                 <div class="flex justify-end items-center">${badgeHtml}</div>
             `;
             
@@ -301,18 +286,12 @@
         });
     }
 
-    // === 排序邏輯 ===
     function sortList(type, criteria, keepOrder = false) {
         let list = rawData[`${type}List`];
         
         if (!keepOrder) {
-            // 判斷是否連續點擊同一個欄位 (切換正反向)
-            if (sortOrders[type].by === criteria) {
-                sortOrders[type].asc = !sortOrders[type].asc;
-            } else {
-                sortOrders[type].by = criteria;
-                sortOrders[type].asc = true;
-            }
+            if (sortOrders[type].by === criteria) sortOrders[type].asc = !sortOrders[type].asc;
+            else { sortOrders[type].by = criteria; sortOrders[type].asc = true; }
         }
 
         let isAsc = sortOrders[type].asc;
@@ -322,13 +301,11 @@
                 let res = a.stationId.localeCompare(b.stationId, undefined, {numeric: true});
                 return isAsc ? res : -res;
             } else if (sortOrders[type].by === 'status') {
-                // 依照狀態文字排序
                 let valA = a.status || "";
                 let valB = b.status || "";
                 let res = valA.localeCompare(valB);
                 return isAsc ? res : -res;
             } else {
-                // 時間排序
                 let res = b.timestamp.localeCompare(a.timestamp); 
                 return isAsc ? -res : res;
             }
@@ -337,7 +314,6 @@
         renderList(type);
     }
 
-    // === 載入並鎖定單筆紀錄 ===
     async function loadRecord(item, type) {
         const role = document.getElementById('user-role').value;
         if (!role) { showToast("⚠️ 請先於右上角選擇帳號身分，才能調閱資料！"); return; }
@@ -370,10 +346,9 @@
         loadCanvasImage(item.stationId, type);
     }
 
-    // === 動態渲染群組化的表格 ===
     function renderTable(item) {
         const tbody = document.getElementById('data-tbody');
-        tbody.innerHTML = ''; // 清空舊資料
+        tbody.innerHTML = ''; 
         
         const orderedTypes = ['市長', '區域議員', '平地原住民議員', '山地原住民議員', '里長', '公投'];
         
@@ -412,7 +387,6 @@
         }
     }
 
-    // === 更新燈號 ===
     async function updateStatus() {
         if (!currentTxId) return;
         const newStatus = document.getElementById('status-select').value;
@@ -421,7 +395,7 @@
         if (!role) { showToast("⚠️ 請先選擇身分"); return; }
 
         let lockedBy = role;
-        if (newStatus === '一二聯報表ok(綠)') lockedBy = ''; // 結案解除鎖定
+        if (newStatus === '一二聯報表ok(綠)') lockedBy = ''; 
 
         try {
             const res = await fetch(GAS_API_URL, {
@@ -438,16 +412,13 @@
         } catch(e) { showToast("❌ 更新失敗，請檢查網路"); }
     }
 
-    // === 強制解鎖 ===
     async function unlockRecord() {
         if (!currentTxId) return;
         try {
-            // 修正：送出狀態為空字串，連帶重置狀態
             await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateStatus', txId: currentTxId, lockedBy: '', status: '' }) });
-            
             currentRecord.lockedBy = '';
-            currentRecord.status = ''; // 重置前端本地狀態
-            document.getElementById('status-select').value = ''; // 將下拉選單重置為尚未判定
+            currentRecord.status = ''; 
+            document.getElementById('status-select').value = ''; 
             
             renderList(currentListType);
             document.getElementById('btn-unlock').style.display = 'none';
@@ -455,7 +426,7 @@
         } catch(e) { showToast("❌ 解鎖失敗"); }
     }
 
-    // === 載入並控制 Canvas 圖檔 ===
+    // === Canvas 圖片控制 ===
     const imgElement = document.getElementById('report-img');
     const imgContainer = document.getElementById('img-container');
     const loadingMsg = document.getElementById('loading-msg');
@@ -478,9 +449,7 @@
                     if(scale > 1) scale = 1; 
                     updateTransform();
                 };
-            } else {
-                loadingMsg.textContent = "❌ 找不到圖檔";
-            }
+            } else { loadingMsg.textContent = "❌ 找不到圖檔"; }
         } catch(e) { loadingMsg.textContent = "❌ 圖檔載入發生錯誤"; }
     }
 
@@ -488,15 +457,8 @@
     function resetZoom() { scale = imgContainer.clientWidth / imgElement.naturalWidth; posX = 0; posY = 0; updateTransform(); }
     function updateTransform() { imgElement.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
 
-    imgContainer.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        const factor = e.deltaY > 0 ? 0.9 : 1.1;
-        zoom(factor);
-    });
-
-    imgContainer.addEventListener('mousedown', (e) => {
-        isPanning = true; startX = e.clientX - posX; startY = e.clientY - posY;
-    });
+    imgContainer.addEventListener('wheel', (e) => { e.preventDefault(); zoom(e.deltaY > 0 ? 0.9 : 1.1); });
+    imgContainer.addEventListener('mousedown', (e) => { isPanning = true; startX = e.clientX - posX; startY = e.clientY - posY; });
     window.addEventListener('mousemove', (e) => {
         if (!isPanning) return;
         posX = e.clientX - startX; posY = e.clientY - startY;
@@ -504,16 +466,12 @@
     });
     window.addEventListener('mouseup', () => { isPanning = false; });
 
-    // === 列印功能 ===
     function printReport() {
-        if (!imgElement.src || imgElement.style.display === 'none') {
-            showToast("⚠️ 請先載入報表圖檔才能列印！"); return;
-        }
+        if (!imgElement.src || imgElement.style.display === 'none') { showToast("⚠️ 請先載入報表圖檔才能列印！"); return; }
         document.getElementById('print-img').src = imgElement.src;
         window.print();
     }
 
-    // 初次載入
     window.onload = fetchListData;
 </script>
 </body>
