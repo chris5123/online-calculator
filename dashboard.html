@@ -48,11 +48,11 @@
         .zoom-btn:active { background: #e2e8f0; }
 
         /* 數據表格樣式 (復刻試算器) */
-        table { width: 100%; border-collapse: collapse; text-align: center; }
+        table { width: 100%; border-collapse: collapse; text-align: center; white-space: nowrap; }
         th, td { border: 1px solid #94a3b8; padding: 4px; font-size: 13px; }
         th { background-color: #f1f5f9; font-weight: bold; position: sticky; top: 0; z-index: 5; }
-        .row-header { font-weight: bold; background: #f8fafc; }
-        .val-cell { font-family: monospace; font-size: 15px; font-weight: bold; color: #0f172a; }
+        .row-header { font-weight: bold; background: #f8fafc; font-size: 15px; }
+        .val-cell { font-family: monospace; font-size: 15px; font-weight: bold; color: #0f172a; min-width: 40px; }
         .check-cell { background-color: #f8fafc; color: #1e3a8a; }
         .err-cell { background-color: #fee2e2 !important; color: #dc2626 !important; }
 
@@ -82,7 +82,7 @@
                 <option value="AdminX">管理員 X</option><option value="AdminY">管理員 Y</option>
             </optgroup>
         </select>
-        <button onclick="fetchListData()" class="bg-blue-100 border border-blue-400 px-3 py-1 rounded hover:bg-blue-200">🔄 重新整理</button>
+        <button onclick="fetchListData()" class="bg-blue-100 border border-blue-400 px-3 py-1 rounded hover:bg-blue-200 font-bold shadow-sm">🔄 重新整理清單</button>
     </div>
 </div>
 
@@ -94,8 +94,8 @@
             <div class="canvas-toolbar">
                 <div class="flex items-center gap-3">
                     <span class="font-bold text-gray-600">調閱票所：</span>
-                    <input type="text" id="current-station" class="border border-gray-300 rounded px-2 py-1 w-24 bg-gray-100 text-center font-bold" readonly placeholder="尚未選擇">
-                    <button onclick="printReport()" class="bg-green-600 text-white font-bold px-4 py-1 rounded hover:bg-green-700 flex items-center gap-1">🖨️ 列印(A3)</button>
+                    <input type="text" id="current-station" class="border border-gray-300 rounded px-2 py-1 w-24 bg-gray-100 text-center font-bold text-blue-900" readonly placeholder="尚未選擇">
+                    <button onclick="printReport()" class="bg-green-600 text-white font-bold px-4 py-1 rounded hover:bg-green-700 flex items-center gap-1 shadow-sm">🖨️ 列印(A3)</button>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="font-bold text-gray-600">檢核判定：</span>
@@ -106,13 +106,13 @@
                         <option value="一聯報表ok(綠)">一聯報表ok(綠)</option>
                         <option value="一二聯報表ok(綠)">一二聯報表ok(綠)</option>
                     </select>
-                    <button onclick="updateStatus()" class="bg-blue-600 text-white font-bold px-4 py-1 rounded hover:bg-blue-700">更新燈號</button>
-                    <button onclick="unlockRecord()" id="btn-unlock" class="bg-red-500 text-white font-bold px-3 py-1 rounded hover:bg-red-600 hidden">強制解鎖</button>
+                    <button onclick="updateStatus()" class="bg-blue-600 text-white font-bold px-4 py-1 rounded hover:bg-blue-700 shadow-sm">更新燈號</button>
+                    <button onclick="unlockRecord()" id="btn-unlock" class="bg-red-500 text-white font-bold px-3 py-1 rounded hover:bg-red-600 shadow-sm hidden">🔒強制解鎖</button>
                 </div>
             </div>
             
             <div class="canvas-container" id="img-container">
-                <div id="loading-msg" class="absolute inset-0 flex items-center justify-center font-bold text-gray-500 hidden">載入影像中，請稍候...</div>
+                <div id="loading-msg" class="absolute inset-0 flex items-center justify-center font-bold text-gray-500 hidden text-xl bg-gray-200 bg-opacity-70 z-10">載入影像中，請稍候...</div>
                 <img id="report-img" src="" style="display:none;">
                 <div class="zoom-controls">
                     <button class="zoom-btn" onclick="zoom(1.2)">+</button>
@@ -169,7 +169,7 @@
 </div>
 
 <script>
-    // ⚠️ 替換成您昨天部署的 GAS API 網址
+    // ⚠️ 請確保這是您最新的 API 網址 (每次重新部署可能會換新網址)
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw7-9Axst2b44keFWFllxzuLWGJPuWoVOijT1-C79K-6AkqPqEwQ6iL02zzjqlalNwhuA/exec';
     
     let rawData = { govList: [], refList: [] };
@@ -181,6 +181,9 @@
     // === 載入清單資料 ===
     async function fetchListData() {
         try {
+            document.getElementById('list-gov').innerHTML = '<div class="p-4 text-center text-gray-500">載入中...</div>';
+            document.getElementById('list-ref').innerHTML = '<div class="p-4 text-center text-gray-500">載入中...</div>';
+            
             const res = await fetch(`${GAS_API_URL}?action=getDashboardData`);
             const json = await res.json();
             if (json.status === 'success') {
@@ -202,14 +205,12 @@
             const row = document.createElement('div');
             row.className = 'list-item';
             
-            // 判斷鎖定與結案狀態
             let isClosed = item.status === '一二聯報表ok(綠)';
             let isLocked = item.lockedBy && item.lockedBy !== '' && !isClosed;
             
             if(isClosed) row.classList.add('closed');
             else if(isLocked) row.classList.add('locked');
 
-            // 產生狀態徽章
             let badgeHtml = '';
             if (isLocked) badgeHtml = `<span class="badge badge-warn text-[10px]" title="鎖定中">🔒${item.lockedBy}</span>`;
             else if (item.status === '數字有誤(紅)') badgeHtml = '<span class="badge badge-err">1</span>';
@@ -217,11 +218,14 @@
             else if (item.status === '一聯報表ok(綠)') badgeHtml = '<span class="badge badge-ok1">1</span>';
             else if (isClosed) badgeHtml = '<span class="badge badge-ok2">1.2</span>';
 
-            const timeStr = new Date(item.timestamp).toLocaleTimeString('zh-TW', { hour12: false });
+            // 修正 Invalid Date 問題：直接抽取字串中的時間部分 (支援 "2026/10/31 下午 5:11:54" 格式)
+            let timeStr = item.timestamp;
+            const match = item.timestamp.match(/([上|下]午\s?\d+:\d+:\d+)/) || item.timestamp.match(/(\d+:\d+:\d+)/);
+            if (match) timeStr = match[0];
             
             row.innerHTML = `
-                <div class="font-bold">${item.stationId}</div>
-                <div>${timeStr}</div>
+                <div class="font-bold tracking-wider">${item.stationId}</div>
+                <div class="text-gray-700">${timeStr}</div>
                 <div class="flex justify-end">${badgeHtml}</div>
             `;
             
@@ -237,7 +241,8 @@
             list.sort((a, b) => a.stationId.localeCompare(b.stationId, undefined, {numeric: true}));
             sortOrders[type] = 'station_asc';
         } else {
-            list.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            // 直接以原始字串的 localeCompare 作為排序依據，避免 new Date 報錯
+            list.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
             sortOrders[type] = 'time_desc';
         }
         renderList(type);
@@ -246,12 +251,11 @@
     // === 載入並鎖定單筆紀錄 ===
     async function loadRecord(item, type) {
         const role = document.getElementById('user-role').value;
-        if (!role) { alert("請先於右上角選擇帳號身分！"); return; }
+        if (!role) { alert("⚠️ 請先於右上角選擇帳號身分，才能調閱資料！"); return; }
         
         let isClosed = item.status === '一二聯報表ok(綠)';
         let isAdmin = role.startsWith('Admin');
 
-        // 如果別人鎖定中且不是管理員，則阻擋
         if (item.lockedBy && item.lockedBy !== role && !isClosed && !isAdmin) {
             alert(`此筆資料正由【${item.lockedBy}】檢核中，請選擇其他票所。`);
             return;
@@ -265,7 +269,6 @@
         document.getElementById('status-select').value = item.status || '';
         document.getElementById('btn-unlock').style.display = (isAdmin && item.lockedBy && !isClosed) ? 'block' : 'none';
 
-        // 寫入鎖定狀態到 DB
         if (!isClosed && item.lockedBy !== role) {
             await fetch(GAS_API_URL, {
                 method: 'POST', body: JSON.stringify({ action: 'updateStatus', txId: currentTxId, lockedBy: role })
@@ -274,40 +277,50 @@
             renderList(type);
         }
 
-        // 渲染底部表格
         renderTable(item);
-
-        // 載入 Canvas 圖檔
         loadCanvasImage(item.stationId, type);
     }
 
+    // === 動態渲染群組化的表格 ===
     function renderTable(item) {
         const tbody = document.getElementById('data-tbody');
-        let candsHtml = '';
-        for(let i=0; i<14; i++) {
-            let val = item.candidates[i];
-            candsHtml += `<td class="val-cell ${val ? '' : 'bg-gray-100'}">${val || ''}</td>`;
+        tbody.innerHTML = ''; // 清空舊資料
+        
+        const orderedTypes = ['市長', '區域議員', '平地原住民議員', '山地原住民議員', '里長', '公投'];
+        
+        orderedTypes.forEach(type => {
+            if (item.records && item.records[type]) {
+                const rec = item.records[type];
+                let candsHtml = '';
+                for(let i=0; i<14; i++) {
+                    let val = rec.candidates[i];
+                    candsHtml += `<td class="val-cell ${val ? '' : 'bg-gray-100'}">${val || ''}</td>`;
+                }
+
+                let electors = Number(rec.stats.electors || 0);
+                let checkVal = Number(rec.stats.check || 0);
+                let checkClass = (electors !== checkVal || checkVal === 0) ? 'err-cell' : 'text-green-700';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td colspan="2" class="row-header">${type}</td>
+                    ${candsHtml}
+                    <td class="val-cell check-cell">${rec.stats.valid}</td>
+                    <td class="val-cell check-cell">${rec.stats.invalid}</td>
+                    <td class="val-cell check-cell">${rec.stats.total}</td>
+                    <td class="val-cell check-cell">${rec.stats.issuedNotVoted}</td>
+                    <td class="val-cell check-cell">${rec.stats.issued}</td>
+                    <td class="val-cell check-cell">${rec.stats.remaining}</td>
+                    <td class="val-cell check-cell">${rec.stats.electors}</td>
+                    <td class="val-cell font-bold ${checkClass}">${rec.stats.check}</td>
+                `;
+                tbody.appendChild(tr);
+            }
+        });
+        
+        if(tbody.innerHTML === '') {
+            tbody.innerHTML = `<tr><td colspan="26" class="py-10 text-gray-400 font-bold text-lg">此票所查無詳細選票數據</td></tr>`;
         }
-
-        // 檢查值防呆著色
-        let electors = Number(item.stats.electors || 0);
-        let checkVal = Number(item.stats.check || 0);
-        let checkClass = (electors !== checkVal || checkVal === 0) ? 'err-cell' : 'text-green-700';
-
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="2" class="row-header">${item.type}</td>
-                ${candsHtml}
-                <td class="val-cell check-cell">${item.stats.valid}</td>
-                <td class="val-cell check-cell">${item.stats.invalid}</td>
-                <td class="val-cell check-cell">${item.stats.total}</td>
-                <td class="val-cell check-cell">${item.stats.issuedNotVoted}</td>
-                <td class="val-cell check-cell">${item.stats.issued}</td>
-                <td class="val-cell check-cell">${item.stats.remaining}</td>
-                <td class="val-cell check-cell">${item.stats.electors}</td>
-                <td class="val-cell font-bold ${checkClass}">${item.stats.check}</td>
-            </tr>
-        `;
     }
 
     // === 更新燈號 ===
@@ -365,7 +378,6 @@
                 imgElement.onload = () => {
                     loadingMsg.classList.add('hidden');
                     imgElement.style.display = 'block';
-                    // 自動縮放符合寬度
                     scale = imgContainer.clientWidth / imgElement.naturalWidth;
                     if(scale > 1) scale = 1; 
                     updateTransform();
@@ -373,10 +385,9 @@
             } else {
                 loadingMsg.textContent = "❌ 找不到圖檔";
             }
-        } catch(e) { loadingMsg.textContent = "❌ 圖檔載入失敗"; }
+        } catch(e) { loadingMsg.textContent = "❌ 圖檔載入發生錯誤"; }
     }
 
-    // 縮放與平移邏輯
     function zoom(factor) { scale *= factor; updateTransform(); }
     function resetZoom() { scale = imgContainer.clientWidth / imgElement.naturalWidth; posX = 0; posY = 0; updateTransform(); }
     function updateTransform() { imgElement.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
