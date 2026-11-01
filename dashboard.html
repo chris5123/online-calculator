@@ -21,15 +21,26 @@
         .lists-area { flex: 1; display: flex; gap: 10px; }
         .list-box { flex: 1; background: white; border-radius: 8px; border: 1px solid #cbd5e1; display: flex; flex-direction: column; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; }
         
-        /* 清單樣式 (修正格線與時間截斷) */
+        /* ========================================================= */
+        /* 清單網格樣式 (CSS Grid 強制三欄對齊，解決擠壓問題) */
+        /* ========================================================= */
         .list-header { color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 15px; }
         .bg-gov { background-color: #1e293b; }
         .bg-ref { background-color: #0f766e; }
+        
+        /* 定義三欄：票所(1份寬度)、時間(1份寬度)、狀態(固定 60px) */
+        .list-grid { display: grid; grid-template-columns: 1fr 1fr 60px; gap: 8px; align-items: center; width: 100%; }
+        
         .list-body { flex: 1; overflow-y: auto; }
-        .list-item { display: flex; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; cursor: pointer; align-items: center; font-size: 14px; transition: background 0.1s; gap: 5px; }
+        .list-item { 
+            display: grid; grid-template-columns: 1fr 1fr 60px; gap: 8px; align-items: center;
+            padding: 8px 10px; border-bottom: 1px solid #e2e8f0; cursor: pointer; 
+            font-size: 14px; transition: background 0.1s; 
+        }
         .list-item:hover { background-color: #f8fafc; }
         .list-item.locked { background-color: #fef08a; } /* 黃底代表有人鎖定 */
         .list-item.closed { background-color: #e2e8f0; color: #64748b; text-decoration: line-through; } /* 結案灰底 */
+        
         .time-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; color: #475569; }
         
         /* 狀態徽章 */
@@ -94,7 +105,7 @@
                 <option value="AdminY">管理員 Y</option>
             </optgroup>
         </select>
-        <!-- 修正：加上 type="button" 避免按鈕重整畫面 -->
+        <!-- 修正：加上 type="button" 避免按鈕重整畫面，保留身分選取 -->
         <button type="button" onclick="fetchListData()" class="bg-blue-100 border border-blue-400 px-3 py-1 rounded hover:bg-blue-200 font-bold shadow-sm">🔄 重新載入清單</button>
     </div>
 </div>
@@ -120,6 +131,7 @@
                         <option value="一二聯報表ok(綠)">一二聯報表ok(綠)</option>
                     </select>
                     <button type="button" onclick="updateStatus()" class="bg-blue-600 text-white font-bold px-4 py-1 rounded hover:bg-blue-700 shadow-sm">更新燈號</button>
+                    <!-- 強制解鎖按鈕 -->
                     <button type="button" onclick="unlockRecord()" id="btn-unlock" class="bg-red-500 text-white font-bold px-3 py-1 rounded hover:bg-red-600 shadow-sm hidden">🔒強制解鎖</button>
                 </div>
             </div>
@@ -140,11 +152,11 @@
             <!-- 公職清單 -->
             <div class="list-box">
                 <div class="list-header bg-gov">已回傳報表清單 (公職)</div>
-                <!-- 修正：將排序點擊區移到下方的次標題列 -->
-                <div class="flex px-3 py-1 bg-gray-100 border-b text-xs font-bold text-gray-600">
-                    <div class="flex-1 cursor-pointer hover:text-blue-600 select-none" onclick="sortList('gov', 'station')">票所編號 ↕</div>
-                    <div class="flex-[1.5] cursor-pointer hover:text-blue-600 select-none" onclick="sortList('gov', 'time')">回傳時間 ↕</div>
-                    <div class="w-12 text-right">狀態</div>
+                <!-- 修正：使用 Grid 強制切齊三欄 -->
+                <div class="list-grid px-3 py-1 bg-gray-100 border-b text-xs font-bold text-gray-600">
+                    <div class="cursor-pointer hover:text-blue-600 select-none text-left" onclick="sortList('gov', 'station')">票所編號 ↕</div>
+                    <div class="cursor-pointer hover:text-blue-600 select-none text-left" onclick="sortList('gov', 'time')">回傳時間 ↕</div>
+                    <div class="cursor-pointer hover:text-blue-600 select-none text-right" onclick="sortList('gov', 'status')">狀態 ↕</div>
                 </div>
                 <div class="list-body" id="list-gov"></div>
             </div>
@@ -152,10 +164,11 @@
             <!-- 公投清單 -->
             <div class="list-box">
                 <div class="list-header bg-ref">已回傳報表清單 (公投)</div>
-                <div class="flex px-3 py-1 bg-gray-100 border-b text-xs font-bold text-gray-600">
-                    <div class="flex-1 cursor-pointer hover:text-blue-600 select-none" onclick="sortList('ref', 'station')">票所編號 ↕</div>
-                    <div class="flex-[1.5] cursor-pointer hover:text-blue-600 select-none" onclick="sortList('ref', 'time')">回傳時間 ↕</div>
-                    <div class="w-12 text-right">狀態</div>
+                <!-- 修正：使用 Grid 強制切齊三欄 -->
+                <div class="list-grid px-3 py-1 bg-gray-100 border-b text-xs font-bold text-gray-600">
+                    <div class="cursor-pointer hover:text-blue-600 select-none text-left" onclick="sortList('ref', 'station')">票所編號 ↕</div>
+                    <div class="cursor-pointer hover:text-blue-600 select-none text-left" onclick="sortList('ref', 'time')">回傳時間 ↕</div>
+                    <div class="cursor-pointer hover:text-blue-600 select-none text-right" onclick="sortList('ref', 'status')">狀態 ↕</div>
                 </div>
                 <div class="list-body" id="list-ref"></div>
             </div>
@@ -238,7 +251,7 @@
         
         list.forEach(item => {
             const row = document.createElement('div');
-            row.className = 'list-item';
+            row.className = 'list-item'; // 使用 grid 類別
             
             let isClosed = item.status === '一二聯報表ok(綠)';
             let isLocked = item.lockedBy && item.lockedBy !== '' && !isClosed;
@@ -259,7 +272,7 @@
                 badgeHtml += `<span class="badge badge-warn text-[10px]" title="鎖定中" style="margin-left:4px;">🔒${item.lockedBy}</span>`;
             }
 
-            // 3. 修正時間格式 (將 "下午 5:11:54" 轉換為 24hr 的 "17:11")
+            // 3. 修正時間格式 (強制萃取成 24 小時制的 HH:MM)
             let timeStr = item.timestamp;
             const ampmMatch = item.timestamp.match(/([上|下]午)\s?(\d{1,2}):(\d{2})/);
             if (ampmMatch) {
@@ -270,18 +283,17 @@
                 if (!isPM && h === 12) h = 0;
                 timeStr = `${h.toString().padStart(2, '0')}:${m}`;
             } else {
-                // 若沒有上下午，嘗試抓取一般 24h 格式 (如 "17:11")
                 const stdMatch = item.timestamp.match(/(\d{1,2}):(\d{2})/);
                 if (stdMatch) {
                     timeStr = `${stdMatch[1].padStart(2, '0')}:${stdMatch[2]}`;
                 }
             }
             
-            // 使用 flexbox 對齊，保證與標題欄位完美切齊
+            // 填入內部 HTML (因為 row 本身已經設定為 Grid，所以內部直接放三個 div)
             row.innerHTML = `
-                <div class="flex-1 font-bold tracking-wider">${item.stationId}</div>
-                <div class="flex-[1.5] time-text font-mono" title="${item.timestamp}">${timeStr}</div>
-                <div class="w-12 flex justify-end items-center">${badgeHtml}</div>
+                <div class="font-bold tracking-wider text-left">${item.stationId}</div>
+                <div class="time-text font-mono text-left" title="${item.timestamp}">${timeStr}</div>
+                <div class="flex justify-end items-center">${badgeHtml}</div>
             `;
             
             row.onclick = () => loadRecord(item, type);
@@ -316,7 +328,7 @@
                 let res = valA.localeCompare(valB);
                 return isAsc ? res : -res;
             } else {
-                // 預設為時間排序 (直接比較原始字串)
+                // 時間排序
                 let res = b.timestamp.localeCompare(a.timestamp); 
                 return isAsc ? -res : res;
             }
@@ -430,7 +442,7 @@
     async function unlockRecord() {
         if (!currentTxId) return;
         try {
-            // 送出狀態為空字串，連帶重置狀態
+            // 修正：送出狀態為空字串，連帶重置狀態
             await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateStatus', txId: currentTxId, lockedBy: '', status: '' }) });
             
             currentRecord.lockedBy = '';
