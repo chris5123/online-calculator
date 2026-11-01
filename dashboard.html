@@ -106,6 +106,7 @@
                         <option value="一二聯報表ok(綠)">一二聯報表ok(綠)</option>
                     </select>
                     <button type="button" onclick="updateStatus()" class="bg-blue-600 text-white font-bold px-4 py-1 rounded hover:bg-blue-700 shadow-sm">更新燈號</button>
+                    <!-- 強制解鎖按鈕 -->
                     <button type="button" onclick="unlockRecord()" id="btn-unlock" class="bg-red-500 text-white font-bold px-3 py-1 rounded hover:bg-red-600 shadow-sm hidden">🔒強制解鎖</button>
                 </div>
             </div>
@@ -332,7 +333,9 @@
         
         document.getElementById('current-station').value = item.stationId;
         document.getElementById('status-select').value = item.status || '';
-        document.getElementById('btn-unlock').style.display = (isAdmin && item.lockedBy && !isClosed) ? 'block' : 'none';
+        
+        // 【關鍵修正】管理者無敵權限：只要有人鎖定「或是」有任何狀態(包含已結案)，一律顯示強制解鎖按鈕！
+        document.getElementById('btn-unlock').style.display = (isAdmin && (item.lockedBy || item.status)) ? 'block' : 'none';
 
         if (!isClosed && item.lockedBy !== role) {
             await fetch(GAS_API_URL, {
