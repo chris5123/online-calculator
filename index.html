@@ -73,7 +73,7 @@
 
         .empty-cell { background-color: #fdfdfd; }
         
-        .action-buttons-container { display: flex; justify-content: flex-end; gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ccc; }
+        .action-buttons-container { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ccc; }
         .action-btn { padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer; border: 1px solid #333; transition: transform 0.1s; }
         .action-btn:active { transform: scale(0.95); }
         .btn-blue { background-color: #bfdbfe; color: #1e3a8a; }
@@ -105,6 +105,9 @@
 
         .toast-msg { position: fixed; bottom: 120px; right: 30px; background-color: rgba(30, 41, 59, 0.95); color: white; padding: 12px 20px; border-radius: 8px; font-size: 16px; opacity: 0; transition: opacity 0.3s; z-index: 10002; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .toast-msg.show { opacity: 1; }
+        
+        .remove-file-btn { color: red; font-weight: bold; cursor: pointer; padding: 0 4px; border-radius: 50%; display: none; }
+        .remove-file-btn:hover { background-color: #fee2e2; }
     </style>
 </head>
 <body>
@@ -132,14 +135,14 @@
                 <tr>
                     <th colspan="2" class="w-16">開票結果<br>選舉種類</th>
                     <th colspan="10">各 候 選 人 得 票 數</th>
-                    <th class="w-28 text-blue-800">有效票數</th>
-                    <th class="w-28">無效票數</th>
-                    <th class="w-28 text-blue-800">投票數</th>
-                    <th class="w-24">已領<br>未投</th>
-                    <th class="w-32 text-blue-800">發出票數</th>
-                    <th class="w-28">用餘票數</th>
-                    <th class="w-36 text-blue-800">選舉人數</th>
-                    <th class="w-36 text-green-700">檢查值</th>
+                    <th class="w-20 text-blue-800">有效票數</th>
+                    <th class="w-20">無效票數</th>
+                    <th class="w-20 text-blue-800">投票數</th>
+                    <th class="w-20">已領<br>未投</th>
+                    <th class="w-20 text-blue-800">發出票數</th>
+                    <th class="w-20">用餘票數</th>
+                    <th class="w-20 text-blue-800">選舉人數</th>
+                    <th class="w-20 text-green-700">檢查值</th>
                 </tr>
             </thead>
             <tbody>
@@ -316,15 +319,15 @@
         </table>
     </div>
 
-    <!-- 按鈕區 (重新排版：清除全部在左，上傳與傳送在右) -->
-    <div class="action-buttons-container" style="justify-content: space-between; align-items: flex-end;">
+    <!-- 按鈕區 -->
+    <div class="action-buttons-container">
         <!-- 左側 -->
         <div>
             <button id="btn-clear-all" class="action-btn" style="background-color: #fca5a5;">清除全部</button>
         </div>
         
         <!-- 右側 -->
-        <div style="display: flex; gap: 15px; align-items: flex-end;">
+        <div style="display: flex; gap: 15px; align-items: flex-end; padding-right: 15%;">
             <button id="btn-lock" class="action-btn btn-green" style="height: 40px; margin-bottom: 2px;">鎖住 / 解鎖</button>
             
             <!-- 圖片上傳區塊 -->
@@ -332,12 +335,14 @@
                 <div style="display: flex; align-items: center; gap: 8px; background: #f8fafc; padding: 4px 8px; border-radius: 6px; border: 1px dashed #cbd5e1;">
                     <button class="action-btn" style="background-color: #fef08a; color: #854d0e; padding: 4px 8px;" onclick="document.getElementById('upload-gov').click()">載入圖檔(公職)</button>
                     <span id="file-name-gov" style="font-size: 14px; color: #333; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace;">未選擇檔案</span>
-                    <input type="file" id="upload-gov" accept="image/*" style="display:none" onchange="document.getElementById('file-name-gov').textContent = this.files[0] ? this.files[0].name : '未選擇檔案'">
+                    <span id="clear-file-gov" class="remove-file-btn" onclick="clearFileInput('upload-gov', 'file-name-gov', 'clear-file-gov')">x</span>
+                    <input type="file" id="upload-gov" accept="image/*" style="display:none" onchange="handleFileSelect(this, 'file-name-gov', 'clear-file-gov')">
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px; background: #f8fafc; padding: 4px 8px; border-radius: 6px; border: 1px dashed #cbd5e1;">
                     <button class="action-btn" style="background-color: #fef08a; color: #854d0e; padding: 4px 8px;" onclick="document.getElementById('upload-ref').click()">載入圖檔(公投)</button>
                     <span id="file-name-ref" style="font-size: 14px; color: #333; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace;">未選擇檔案</span>
-                    <input type="file" id="upload-ref" accept="image/*" style="display:none" onchange="document.getElementById('file-name-ref').textContent = this.files[0] ? this.files[0].name : '未選擇檔案'">
+                    <span id="clear-file-ref" class="remove-file-btn" onclick="clearFileInput('upload-ref', 'file-name-ref', 'clear-file-ref')">x</span>
+                    <input type="file" id="upload-ref" accept="image/*" style="display:none" onchange="handleFileSelect(this, 'file-name-ref', 'clear-file-ref')">
                 </div>
             </div>
 
@@ -529,7 +534,7 @@
             if (electors === checkValue && electors > 0) {
                 checkInput.style.backgroundColor = '#dcfce7'; checkInput.style.color = '#166534';
             } else {
-                checkInput.style.backgroundColor = '#f3f4f6'; checkInput.style.color = '#9ca3af';
+                checkInput.style.backgroundColor = '#fee2e2'; checkInput.style.color = '#dc2626';
             }
         }
     }
@@ -866,6 +871,27 @@
         document.body.appendChild(overlay);
     }
 
+    // === 上傳檔案處理 ===
+    function handleFileSelect(input, textId, clearBtnId) {
+        const textSpan = document.getElementById(textId);
+        const clearBtn = document.getElementById(clearBtnId);
+        if (input.files && input.files[0]) {
+            textSpan.textContent = input.files[0].name;
+            clearBtn.style.display = 'inline-block';
+        } else {
+            textSpan.textContent = '未選擇檔案';
+            clearBtn.style.display = 'none';
+        }
+    }
+
+    function clearFileInput(inputId, textId, clearBtnId) {
+        const input = document.getElementById(inputId);
+        input.value = '';
+        document.getElementById(textId).textContent = '未選擇檔案';
+        document.getElementById(clearBtnId).style.display = 'none';
+    }
+
+
     // === 按鈕功能 ===
     if(document.getElementById('btn-submit')) {
         document.getElementById('btn-submit').addEventListener('click', async () => {
@@ -1008,10 +1034,8 @@
             showToast('🗑️ 已清除所有輸入資料。');
             
             // 清除圖檔與檔名顯示
-            document.getElementById('upload-gov').value = '';
-            document.getElementById('file-name-gov').textContent = '未選擇檔案';
-            document.getElementById('upload-ref').value = '';
-            document.getElementById('file-name-ref').textContent = '未選擇檔案';
+            clearFileInput('upload-gov', 'file-name-gov', 'clear-file-gov');
+            clearFileInput('upload-ref', 'file-name-ref', 'clear-file-ref');
         });
     }
 
