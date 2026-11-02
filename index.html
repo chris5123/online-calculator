@@ -71,6 +71,10 @@
         input:read-only.stats-input { background-color: transparent !important; border: 1px solid transparent !important; }
         input:read-only.stats-input:focus { outline: none !important; border: 1px solid transparent !important; background-color: transparent !important; }
 
+        /* 修正：強制蓋過預設透明背景的狀態檢核顏色 */
+        input:read-only.check-val.match-true { background-color: #dcfce7 !important; color: #000000 !important; }
+        input:read-only.check-val.match-false { background-color: #fee2e2 !important; color: #000000 !important; }
+
         .empty-cell { background-color: #fdfdfd; }
         
         .action-buttons-container { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ccc; }
@@ -326,8 +330,8 @@
             <button id="btn-clear-all" class="action-btn" style="background-color: #fca5a5;">清除全部</button>
         </div>
         
-        <!-- 右側 -->
-        <div style="display: flex; gap: 30px; align-items: flex-end; padding-right: 15%;">
+        <!-- 右側：將內縮拿掉，讓按鈕完全靠右切齊 -->
+        <div style="display: flex; gap: 30px; align-items: flex-end;">
             <button id="btn-lock" class="action-btn btn-green" style="height: 40px; margin-bottom: 2px;">鎖住 / 解鎖</button>
             
             <!-- 圖片上傳區塊 -->
@@ -531,10 +535,15 @@
         const checkInput = document.getElementById(`${prefix}_check`);
         if (checkInput && !checkInput.classList.contains('locked-empty')) {
             const checkValue = Number(checkInput.value);
-            if (electors === checkValue && electors > 0) {
-                checkInput.style.backgroundColor = '#dcfce7'; checkInput.style.color = '#000000';
+            
+            // 重置兩種顏色狀態
+            checkInput.classList.remove('match-true', 'match-false');
+            
+            // 加入新的顏色狀態判斷
+            if (electors === checkValue) {
+                checkInput.classList.add('match-true');
             } else {
-                checkInput.style.backgroundColor = '#fca5a5'; checkInput.style.color = '#000000';
+                checkInput.classList.add('match-false');
             }
         }
     }
