@@ -327,7 +327,7 @@
         </div>
         
         <!-- 右側 -->
-        <div style="display: flex; gap: 15px; align-items: flex-end; padding-right: 15%;">
+        <div style="display: flex; gap: 30px; align-items: flex-end; padding-right: 15%;">
             <button id="btn-lock" class="action-btn btn-green" style="height: 40px; margin-bottom: 2px;">鎖住 / 解鎖</button>
             
             <!-- 圖片上傳區塊 -->
@@ -532,9 +532,9 @@
         if (checkInput && !checkInput.classList.contains('locked-empty')) {
             const checkValue = Number(checkInput.value);
             if (electors === checkValue && electors > 0) {
-                checkInput.style.backgroundColor = '#dcfce7'; checkInput.style.color = '#166534';
+                checkInput.style.backgroundColor = '#dcfce7'; checkInput.style.color = '#000000';
             } else {
-                checkInput.style.backgroundColor = '#fee2e2'; checkInput.style.color = '#dc2626';
+                checkInput.style.backgroundColor = '#fca5a5'; checkInput.style.color = '#000000';
             }
         }
     }
