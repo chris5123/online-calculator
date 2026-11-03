@@ -1,0 +1,19 @@
+{
+  "name": "115 Election Administration Calculator",
+  "short_name": "Election Calculator",
+  "description": "Election vote calculator and report review dashboard.",
+  "lang": "zh-TW",
+  "start_url": "/online-calculator/",
+  "scope": "/online-calculator/",
+  "display": "standalone",
+  "background_color": "#eef2f7",
+  "theme_color": "#123c69",
+  "icons": [
+    {
+      "src": "/online-calculator/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

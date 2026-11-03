@@ -1,74 +1,41 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#123c69" />
+    <meta name="description" content="選務報表檢核 Dashboard" />
+    <link rel="manifest" href="./manifest.webmanifest" />
     <title>計票中心 - 後端調閱系統</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { font-family: 'Helvetica Neue', Helvetica, 'PingFang TC', '微軟正黑體', sans-serif; background-color: #f1f5f9; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        
-        /* 頂部列 */
-        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background-color: white; border-bottom: 2px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); z-index: 10; }
-        
-        /* 主要版面分割 */
-        .main-content { display: flex; flex-direction: column; flex: 1; overflow: hidden; padding: 15px; gap: 15px; }
-        .top-section { display: flex; flex: 3; gap: 15px; min-height: 40vh; }
-        .bottom-section { flex: 2; background: white; border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: auto; padding: 10px; }
-        
-        /* 區塊樣式 */
-        .canvas-area { flex: 2; background: white; border-radius: 8px; border: 1px solid #cbd5e1; display: flex; flex-direction: column; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; }
-        .lists-area { flex: 1; display: flex; gap: 10px; }
-        .list-box { flex: 1; background: white; border-radius: 8px; border: 1px solid #cbd5e1; display: flex; flex-direction: column; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; }
-        
-        /* 狀態徽章 */
-        .badge { padding: 2px 6px; border-radius: 12px; font-size: 12px; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; min-width: 20px; }
-        .badge-err { background-color: #ef4444; }
-        .badge-warn { background-color: #eab308; }
-        .badge-ok1 { background-color: #22c55e; }
-        .badge-ok2 { background-color: #16a34a; }
-        
-        /* Canvas 控制區 */
-        .canvas-toolbar { padding: 10px; background: #f8fafc; border-bottom: 1px solid #cbd5e1; display: flex; justify-content: space-between; align-items: center; }
-        .canvas-container { flex: 1; overflow: hidden; position: relative; background: #e2e8f0; cursor: grab; }
-        .canvas-container:active { cursor: grabbing; }
-        #report-img { position: absolute; transform-origin: top left; transition: transform 0.1s ease-out; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
-        .zoom-controls { position: absolute; right: 15px; top: 15px; display: flex; flex-direction: column; gap: 8px; z-index: 20; }
-        .zoom-btn { background: white; border: 1px solid #94a3b8; border-radius: 6px; width: 36px; height: 36px; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .zoom-btn:active { background: #e2e8f0; }
+  </head>
+  <body>
+    <div class="app-shell dashboard-page">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">Election Administration</p>
+          <h1>📊 後端 Canvas 調閱系統</h1>
+        </div>
+        <nav class="app-nav" aria-label="主要導覽">
+          <a class="nav-link" href="./">試算器</a>
+          <a class="nav-link is-current" href="./dashboard.html">Dashboard</a>
+          <span id="network-status" class="status-chip" data-tone="info">連線狀態：檢查中</span>
+        </nav>
+      </header>
 
-        /* 數據表格樣式 */
-        table { width: 100%; border-collapse: collapse; text-align: center; white-space: nowrap; }
-        th, td { border: 1px solid #94a3b8; padding: 4px; font-size: 13px; }
-        th { background-color: #f1f5f9; font-weight: bold; position: sticky; top: 0; z-index: 5; }
-        .row-header { font-weight: bold; background: #f8fafc; font-size: 15px; }
-        .val-cell { font-family: monospace; font-size: 15px; font-weight: bold; color: #0f172a; min-width: 40px; }
-        .check-cell { background-color: #f8fafc; color: #1e3a8a; }
-        .err-cell { background-color: #fee2e2 !important; color: #dc2626 !important; }
-
-        /* 列印專用隱藏區塊 */
-        @media print {
-            body * { visibility: hidden; }
-            #print-area, #print-area * { visibility: visible; }
-            #print-area { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
-            #print-area img { max-width: 100%; max-height: 100vh; object-fit: contain; }
-            @page { size: A3 landscape; margin: 0; }
-        }
-
-        /* 提示框 */
-        .toast-msg { position: fixed; bottom: 30px; right: 30px; background-color: rgba(30, 41, 59, 0.95); color: white; padding: 12px 24px; border-radius: 8px; font-size: 16px; opacity: 0; transition: opacity 0.3s; z-index: 10002; pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-weight: bold; }
-        .toast-msg.show { opacity: 1; }
-    </style>
-</head>
-<body>
-
-<div class="top-bar">
-    <h1 class="text-xl font-bold text-gray-800">📊 後端 Canvas 調閱系統</h1>
-    <div class="flex items-center gap-3">
-        <label class="font-bold text-gray-600">目前帳號身分：</label>
-        <select id="user-role" class="border border-gray-400 rounded px-3 py-1 font-bold bg-white">
-            <option value="">-- 請選擇身分 --</option>
-            <optgroup label="檢核人員 (可鎖定與檢核)">
+      <main class="dashboard-content">
+        <section class="page-card dashboard-toolbar" aria-labelledby="dashboard-controls-title">
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="eyebrow">Review Control</p>
+              <h2 id="dashboard-controls-title">檢核工具列</h2>
+            </div>
+            <span id="dashboard-mode" class="muted-label">正式 API 模式</span>
+          </div>
+          <div class="dashboard-controls">
+            <label for="user-role">目前帳號身分</label>
+            <select id="user-role">
+              <option value="">-- 請選擇身分 --</option>
+              <optgroup label="檢核人員">
                 <option value="A">檢核人員 A</option>
                 <option value="B">檢核人員 B</option>
                 <option value="C">檢核人員 C</option>
@@ -76,420 +43,106 @@
                 <option value="E">檢核人員 E</option>
                 <option value="F">檢核人員 F</option>
                 <option value="G">檢核人員 G</option>
-            </optgroup>
-            <optgroup label="系統管理者 (可檢核與強制解鎖)">
+              </optgroup>
+              <optgroup label="系統管理者（僅為前端選擇）">
                 <option value="AdminX">管理員 X</option>
                 <option value="AdminY">管理員 Y</option>
-            </optgroup>
-        </select>
-        <button type="button" onclick="fetchListData()" class="bg-blue-100 border border-blue-400 px-3 py-1 rounded hover:bg-blue-200 font-bold shadow-sm">🔄 重新載入清單</button>
-    </div>
-</div>
+              </optgroup>
+            </select>
+            <button id="reload-list" class="button button-secondary" type="button">重新載入清單</button>
+            <label for="list-search">搜尋票所</label>
+            <input id="list-search" type="search" placeholder="輸入票所編號" />
+          </div>
+          <div id="dashboard-status" class="operation-status" data-tone="info" aria-live="polite">準備中</div>
+        </section>
 
-<div class="main-content">
-    <div class="top-section">
-        <!-- Canvas 看圖區 -->
-        <div class="canvas-area">
-            <div class="canvas-toolbar">
-                <div class="flex items-center gap-3">
-                    <span class="font-bold text-gray-600">調閱票所：</span>
-                    <input type="text" id="current-station" class="border border-gray-300 rounded px-2 py-1 w-24 bg-gray-100 text-center font-bold text-blue-900" readonly placeholder="尚未選擇">
-                    <button type="button" onclick="printReport()" class="bg-green-600 text-white font-bold px-4 py-1 rounded hover:bg-green-700 flex items-center gap-1 shadow-sm">🖨️ 列印(A3)</button>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="font-bold text-gray-600">檢核判定：</span>
-                    <select id="status-select" class="border border-gray-400 rounded px-2 py-1 font-bold">
-                        <option value="">-- 尚未判定 --</option>
-                        <option value="數字有誤(紅)">數字有誤(紅)</option>
-                        <option value="待補正(黃)">待補正(黃)</option>
-                        <option value="一聯報表ok(綠)">一聯報表ok(綠)</option>
-                        <option value="一二聯報表ok(綠)">一二聯報表ok(綠)</option>
-                    </select>
-                    <button type="button" onclick="updateStatus()" class="bg-blue-600 text-white font-bold px-4 py-1 rounded hover:bg-blue-700 shadow-sm">更新燈號</button>
-                    <!-- 強制解鎖按鈕 -->
-                    <button type="button" onclick="unlockRecord()" id="btn-unlock" class="bg-red-500 text-white font-bold px-3 py-1 rounded hover:bg-red-600 shadow-sm hidden">🔒強制解鎖</button>
-                </div>
+        <section class="dashboard-top-grid">
+          <article class="page-card preview-card" aria-labelledby="preview-title">
+            <div class="section-heading compact-heading">
+              <div>
+                <p class="eyebrow">Report Preview</p>
+                <h2 id="preview-title">報表影像</h2>
+              </div>
+              <div class="preview-actions">
+                <span id="current-station" class="station-pill">尚未選擇</span>
+                <button id="print-report" class="button button-secondary" type="button">列印 A3</button>
+              </div>
             </div>
-            
-            <div class="canvas-container" id="img-container">
-                <div id="loading-msg" class="absolute inset-0 flex items-center justify-center font-bold text-gray-500 hidden text-xl bg-gray-200 bg-opacity-70 z-10">載入影像中，請稍候...</div>
-                <img id="report-img" src="" style="display:none;">
-                <div class="zoom-controls">
-                    <button class="zoom-btn" onclick="zoom(1.2)">+</button>
-                    <button class="zoom-btn" onclick="zoom(0.8)">-</button>
-                    <button class="zoom-btn" onclick="resetZoom()" style="font-size: 14px;">↺</button>
-                </div>
+            <div id="image-container" class="image-container">
+              <div id="image-loading" class="image-state">請由右側清單選擇票所</div>
+              <img id="report-image" alt="選取票所的報表影像" hidden />
+              <div class="zoom-controls" aria-label="影像縮放控制">
+                <button id="zoom-in" class="icon-button" type="button" aria-label="放大">＋</button>
+                <button id="zoom-out" class="icon-button" type="button" aria-label="縮小">−</button>
+                <button id="zoom-reset" class="icon-button" type="button" aria-label="重設縮放">↺</button>
+              </div>
             </div>
-        </div>
+          </article>
 
-        <!-- 清單區 -->
-        <div class="lists-area">
-            <!-- 公職清單 (全面導入 Tailwind Grid，嚴格切分三欄) -->
-            <div class="list-box">
-                <div class="bg-slate-800 text-white p-2 text-center font-bold text-sm">已回傳報表清單 (公職)</div>
-                <div id="header-gov" class="grid grid-cols-[1fr_1fr_60px] gap-2 items-center px-3 py-1 bg-gray-100 border-b text-xs font-bold text-gray-600">
-                    <!-- 內容由 JS 動態產生，以支援排序箭頭 -->
-                </div>
-                <div class="flex-1 overflow-y-auto bg-white" id="list-gov"></div>
-            </div>
-            
-            <!-- 公投清單 -->
-            <div class="list-box">
-                <div class="bg-teal-700 text-white p-2 text-center font-bold text-sm">已回傳報表清單 (公投)</div>
-                <div id="header-ref" class="grid grid-cols-[1fr_1fr_60px] gap-2 items-center px-3 py-1 bg-gray-100 border-b text-xs font-bold text-gray-600">
-                    <!-- 內容由 JS 動態產生，以支援排序箭頭 -->
-                </div>
-                <div class="flex-1 overflow-y-auto bg-white" id="list-ref"></div>
-            </div>
-        </div>
-    </div>
+          <section class="list-grid" aria-label="已回傳報表清單">
+            <article class="page-card list-card">
+              <div class="list-title gov-title">已回傳報表清單（公職）</div>
+              <div id="header-gov" class="list-header"></div>
+              <div id="list-gov" class="list-body"></div>
+            </article>
+            <article class="page-card list-card">
+              <div class="list-title ref-title">已回傳報表清單（公投）</div>
+              <div id="header-ref" class="list-header"></div>
+              <div id="list-ref" class="list-body"></div>
+            </article>
+          </section>
+        </section>
 
-    <!-- 下半部資料表格 -->
-    <div class="bottom-section">
-        <table>
-            <thead>
+        <section class="page-card data-card" aria-labelledby="data-title">
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="eyebrow">Record Details</p>
+              <h2 id="data-title">報表數值明細</h2>
+            </div>
+            <div class="status-actions">
+              <label for="status-select">檢核判定</label>
+              <select id="status-select">
+                <option value="">-- 尚未判定 --</option>
+                <option value="數字有誤(紅)">數字有誤（紅）</option>
+                <option value="待補正(黃)">待補正（黃）</option>
+                <option value="一聯報表ok(綠)">一聯報表 OK（綠）</option>
+                <option value="一二聯報表ok(綠)">一二聯報表 OK（綠）</option>
+              </select>
+              <button id="update-status" class="button button-primary" type="button">更新燈號</button>
+              <button id="unlock-record" class="button button-danger" type="button" hidden>強制解鎖</button>
+            </div>
+          </div>
+          <div class="table-wrapper dashboard-table-wrapper" role="region" aria-label="報表數值明細" tabindex="0">
+            <table class="data-table dashboard-data-table">
+              <thead>
                 <tr>
-                    <th colspan="2" rowspan="2">選舉種類</th>
-                    <th colspan="14">各 候 選 人 得 票 數</th>
-                    <th rowspan="2">有效票數</th><th rowspan="2">無效票數</th><th rowspan="2">投票數</th>
-                    <th rowspan="2">已領未投</th><th rowspan="2">發出票數</th><th rowspan="2">用餘票數</th>
-                    <th rowspan="2">選舉人數</th><th rowspan="2">檢查值</th>
+                  <th colspan="2" rowspan="2">選舉種類</th>
+                  <th colspan="14">各候選人得票數</th>
+                  <th rowspan="2">有效票數</th>
+                  <th rowspan="2">無效票數</th>
+                  <th rowspan="2">投票數</th>
+                  <th rowspan="2">已領未投</th>
+                  <th rowspan="2">發出票數</th>
+                  <th rowspan="2">用餘票數</th>
+                  <th rowspan="2">選舉人數</th>
+                  <th rowspan="2">檢查值</th>
                 </tr>
                 <tr>
-                    <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th>
-                    <th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th>
+                  <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th>
+                  <th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th>
                 </tr>
-            </thead>
-            <tbody id="data-tbody">
-                <tr><td colspan="26" class="py-10 text-gray-400 font-bold text-lg">請由右側清單點選欲調閱之票所</td></tr>
-            </tbody>
-        </table>
+              </thead>
+              <tbody id="data-tbody">
+                <tr><td colspan="26" class="empty-state">請由清單點選欲調閱的票所。</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
     </div>
-</div>
 
-<div id="print-area" style="display:none;"><img id="print-img" src=""></div>
-<div class="toast-msg" id="toast"></div>
-
-<script>
-    // ⚠️ 請確保這是您最新的 API 網址
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw7-9Axst2b44keFWFllxzuLWGJPuWoVOijT1-C79K-6AkqPqEwQ6iL02zzjqlalNwhuA/exec';
-    
-    let rawData = { govList: [], refList: [] };
-    let currentTxId = null;
-    let currentRecord = null;
-    let currentListType = null;
-    // 預設排序：時間新到舊
-    let sortOrders = { gov: { by: 'time', asc: false }, ref: { by: 'time', asc: false } };
-
-    function showToast(msg) {
-        const toast = document.getElementById('toast');
-        toast.textContent = msg;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3000);
-    }
-
-    async function fetchListData() {
-        try {
-            document.getElementById('list-gov').innerHTML = '<div class="p-4 text-center text-gray-500 font-bold">載入中...</div>';
-            document.getElementById('list-ref').innerHTML = '<div class="p-4 text-center text-gray-500 font-bold">載入中...</div>';
-            
-            const res = await fetch(`${GAS_API_URL}?action=getDashboardData`);
-            const json = await res.json();
-            if (json.status === 'success') {
-                rawData = json.data;
-                sortList('gov', sortOrders.gov.by, true); 
-                sortList('ref', sortOrders.ref.by, true);
-                showToast("✅ 清單已更新");
-            } else { showToast("❌ 讀取清單失敗：" + json.message); }
-        } catch (err) { showToast("❌ 網路錯誤，無法載入清單"); }
-    }
-
-    // 取得排序圖示
-    function getSortIcon(type, criteria) {
-        if (sortOrders[type].by === criteria) {
-            return sortOrders[type].asc ? '↑' : '↓';
-        }
-        return '↕';
-    }
-
-    // === 渲染清單 (全面採用 Tailwind CSS Grid) ===
-    function renderList(type) {
-        const container = document.getElementById(`list-${type}`);
-        const headerContainer = document.getElementById(`header-${type}`);
-        container.innerHTML = '';
-        
-        // 重新繪製帶有排序箭頭的表頭
-        headerContainer.innerHTML = `
-            <div class="cursor-pointer hover:text-blue-600 select-none text-left" onclick="sortList('${type}', 'station')">票所編號 ${getSortIcon(type, 'station')}</div>
-            <div class="cursor-pointer hover:text-blue-600 select-none text-center" onclick="sortList('${type}', 'time')">回傳時間 ${getSortIcon(type, 'time')}</div>
-            <div class="cursor-pointer hover:text-blue-600 select-none text-right" onclick="sortList('${type}', 'status')">狀態 ${getSortIcon(type, 'status')}</div>
-        `;
-
-        let list = rawData[`${type}List`];
-        
-        list.forEach(item => {
-            const row = document.createElement('div');
-            
-            // 🚨 強制啟用 Grid 排版：1fr (編號), 1fr (時間), 60px (狀態)
-            row.className = 'grid grid-cols-[1fr_1fr_60px] gap-2 items-center px-3 py-2 border-b border-gray-200 cursor-pointer text-sm transition-colors hover:bg-slate-50';
-            
-            let isClosed = item.status === '一二聯報表ok(綠)';
-            let isLocked = item.lockedBy && item.lockedBy !== '' && !isClosed;
-            
-            if(isClosed) {
-                // 結案狀態：灰色底、灰色字、刪除線
-                row.classList.add('bg-slate-200', 'text-slate-500', 'line-through');
-            } else if(isLocked) {
-                // 處理中狀態：黃色底
-                row.classList.add('bg-yellow-100');
-            }
-
-            let badgeHtml = '';
-            // 繪製檢核燈號
-            if (item.status === '數字有誤(紅)') badgeHtml += '<span class="badge badge-err">1</span>';
-            else if (item.status === '待補正(黃)') badgeHtml += '<span class="badge badge-warn">1</span>';
-            else if (item.status === '一聯報表ok(綠)') badgeHtml += '<span class="badge badge-ok1">1</span>';
-            else if (isClosed) badgeHtml += '<span class="badge badge-ok2">1.2</span>';
-
-            // 並排繪製鎖頭 (若有人鎖定)
-            if (isLocked) {
-                badgeHtml += `<span class="badge badge-warn text-[10px]" title="鎖定中" style="margin-left:4px;">🔒${item.lockedBy}</span>`;
-            }
-
-            // 萃取純淨的 24 小時制時間 (HH:MM)
-            let timeStr = item.timestamp;
-            try {
-                const ampmMatch = item.timestamp.match(/(上午|下午)\s?(\d{1,2}):(\d{2})/);
-                if (ampmMatch) {
-                    let isPM = ampmMatch[1] === '下午';
-                    let h = parseInt(ampmMatch[2], 10);
-                    let m = ampmMatch[3];
-                    if (isPM && h < 12) h += 12;
-                    if (!isPM && h === 12) h = 0;
-                    timeStr = `${h.toString().padStart(2, '0')}:${m}`;
-                } else {
-                    const stdMatch = item.timestamp.match(/(\d{1,2}):(\d{2})/);
-                    if (stdMatch) {
-                        timeStr = `${stdMatch[1].padStart(2, '0')}:${stdMatch[2]}`;
-                    }
-                }
-            } catch(e) {}
-            
-            // 🚨 嚴格對應 Grid 的 3 個區塊：左對齊(編號)、置中對齊(時間)、右對齊(徽章)
-            row.innerHTML = `
-                <div class="font-bold tracking-wider text-left truncate">${item.stationId}</div>
-                <div class="font-mono text-center truncate ${isClosed ? 'text-slate-500' : 'text-slate-600'}" title="${item.timestamp}">${timeStr}</div>
-                <div class="flex justify-end items-center">${badgeHtml}</div>
-            `;
-            
-            row.onclick = () => loadRecord(item, type);
-            container.appendChild(row);
-        });
-    }
-
-    function sortList(type, criteria, keepOrder = false) {
-        let list = rawData[`${type}List`];
-        
-        if (!keepOrder) {
-            if (sortOrders[type].by === criteria) sortOrders[type].asc = !sortOrders[type].asc;
-            else { sortOrders[type].by = criteria; sortOrders[type].asc = true; }
-        }
-
-        let isAsc = sortOrders[type].asc;
-
-        list.sort((a, b) => {
-            if (sortOrders[type].by === 'station') {
-                let res = a.stationId.localeCompare(b.stationId, undefined, {numeric: true});
-                return isAsc ? res : -res;
-            } else if (sortOrders[type].by === 'status') {
-                let valA = a.status || "";
-                let valB = b.status || "";
-                let res = valA.localeCompare(valB);
-                return isAsc ? res : -res;
-            } else {
-                let res = b.timestamp.localeCompare(a.timestamp); 
-                return isAsc ? -res : res;
-            }
-        });
-        
-        renderList(type);
-    }
-
-    async function loadRecord(item, type) {
-        const role = document.getElementById('user-role').value;
-        if (!role) { showToast("⚠️ 請先於右上角選擇帳號身分，才能調閱資料！"); return; }
-        
-        let isClosed = item.status === '一二聯報表ok(綠)';
-        let isAdmin = role.startsWith('Admin');
-
-        // 新增防呆 1：阻擋一般檢核人員開啟「已結案」資料
-        if (isClosed && !isAdmin) {
-            showToast(`⚠️ 此筆資料已結案，僅限系統管理者操作與解鎖！`);
-            return;
-        }
-
-        if (item.lockedBy && item.lockedBy !== role && !isClosed && !isAdmin) {
-            showToast(`⚠️ 此筆資料正由【${item.lockedBy}】檢核中！`);
-            return;
-        }
-
-        currentRecord = item;
-        currentTxId = item.txId;
-        currentListType = type;
-        
-        document.getElementById('current-station').value = item.stationId;
-        document.getElementById('status-select').value = item.status || '';
-        
-        // 【關鍵修正】管理者無敵權限：只要有人鎖定「或是」有任何狀態(包含已結案)，一律顯示強制解鎖按鈕！
-        document.getElementById('btn-unlock').style.display = (isAdmin && (item.lockedBy || item.status)) ? 'block' : 'none';
-
-        if (!isClosed && item.lockedBy !== role) {
-            await fetch(GAS_API_URL, {
-                method: 'POST', body: JSON.stringify({ action: 'updateStatus', txId: currentTxId, lockedBy: role })
-            });
-            item.lockedBy = role;
-            renderList(type);
-        }
-
-        renderTable(item);
-        loadCanvasImage(item.stationId, type);
-    }
-
-    function renderTable(item) {
-        const tbody = document.getElementById('data-tbody');
-        tbody.innerHTML = ''; 
-        
-        const orderedTypes = ['市長', '區域議員', '平地原住民議員', '山地原住民議員', '里長', '公投'];
-        
-        orderedTypes.forEach(type => {
-            if (item.records && item.records[type]) {
-                const rec = item.records[type];
-                let candsHtml = '';
-                for(let i=0; i<14; i++) {
-                    let val = rec.candidates[i];
-                    candsHtml += `<td class="val-cell ${val ? '' : 'bg-gray-100'}">${val || ''}</td>`;
-                }
-
-                let electors = Number(rec.stats.electors || 0);
-                let checkVal = Number(rec.stats.check || 0);
-                let checkClass = (electors !== checkVal || checkVal === 0) ? 'err-cell' : 'text-green-700';
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td colspan="2" class="row-header">${type}</td>
-                    ${candsHtml}
-                    <td class="val-cell check-cell">${rec.stats.valid}</td>
-                    <td class="val-cell check-cell">${rec.stats.invalid}</td>
-                    <td class="val-cell check-cell">${rec.stats.total}</td>
-                    <td class="val-cell check-cell">${rec.stats.issuedNotVoted}</td>
-                    <td class="val-cell check-cell">${rec.stats.issued}</td>
-                    <td class="val-cell check-cell">${rec.stats.remaining}</td>
-                    <td class="val-cell check-cell">${rec.stats.electors}</td>
-                    <td class="val-cell font-bold ${checkClass}">${rec.stats.check}</td>
-                `;
-                tbody.appendChild(tr);
-            }
-        });
-        
-        if(tbody.innerHTML === '') {
-            tbody.innerHTML = `<tr><td colspan="26" class="py-10 text-gray-400 font-bold text-lg">此票所查無詳細選票數據</td></tr>`;
-        }
-    }
-
-    async function updateStatus() {
-        if (!currentTxId) return;
-        const newStatus = document.getElementById('status-select').value;
-        const role = document.getElementById('user-role').value;
-        
-        if (!role) { showToast("⚠️ 請先選擇身分"); return; }
-
-        let isAdmin = role.startsWith('Admin');
-        
-        // 新增防呆 2：如果當前畫面已經是結案狀態，且操作者非管理者，禁止再次更新
-        if (currentRecord && currentRecord.status === '一二聯報表ok(綠)' && !isAdmin) {
-            showToast("⚠️ 此筆資料已結案，僅限系統管理者解鎖！");
-            return;
-        }
-
-        let lockedBy = role;
-        if (newStatus === '一二聯報表ok(綠)') lockedBy = ''; 
-
-        try {
-            const res = await fetch(GAS_API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'updateStatus', txId: currentTxId, status: newStatus, lockedBy: lockedBy })
-            });
-            const json = await res.json();
-            if(json.status === 'success') {
-                currentRecord.status = newStatus;
-                currentRecord.lockedBy = lockedBy;
-                renderList(currentListType);
-                showToast("✅ 狀態已更新並連動至主資料表");
-            }
-        } catch(e) { showToast("❌ 更新失敗，請檢查網路"); }
-    }
-
-    async function unlockRecord() {
-        if (!currentTxId) return;
-        try {
-            await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateStatus', txId: currentTxId, lockedBy: '', status: '' }) });
-            currentRecord.lockedBy = '';
-            currentRecord.status = ''; 
-            document.getElementById('status-select').value = ''; 
-            
-            renderList(currentListType);
-            document.getElementById('btn-unlock').style.display = 'none';
-            showToast("🔓 已強制解鎖並清除檢核狀態");
-        } catch(e) { showToast("❌ 解鎖失敗"); }
-    }
-
-    // === Canvas 圖片控制 ===
-    const imgElement = document.getElementById('report-img');
-    const imgContainer = document.getElementById('img-container');
-    const loadingMsg = document.getElementById('loading-msg');
-    let scale = 1, posX = 0, posY = 0, isPanning = false, startX, startY;
-
-    async function loadCanvasImage(stationId, type) {
-        imgElement.style.display = 'none';
-        loadingMsg.classList.remove('hidden');
-        resetZoom();
-
-        try {
-            const res = await fetch(`${GAS_API_URL}?action=getImage&stationId=${stationId}&type=${type}`);
-            const json = await res.json();
-            if (json.status === 'success') {
-                imgElement.src = json.data;
-                imgElement.onload = () => {
-                    loadingMsg.classList.add('hidden');
-                    imgElement.style.display = 'block';
-                    scale = imgContainer.clientWidth / imgElement.naturalWidth;
-                    if(scale > 1) scale = 1; 
-                    updateTransform();
-                };
-            } else { loadingMsg.textContent = "❌ 找不到圖檔"; }
-        } catch(e) { loadingMsg.textContent = "❌ 圖檔載入發生錯誤"; }
-    }
-
-    function zoom(factor) { scale *= factor; updateTransform(); }
-    function resetZoom() { scale = imgContainer.clientWidth / imgElement.naturalWidth; posX = 0; posY = 0; updateTransform(); }
-    function updateTransform() { imgElement.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
-
-    imgContainer.addEventListener('wheel', (e) => { e.preventDefault(); zoom(e.deltaY > 0 ? 0.9 : 1.1); });
-    imgContainer.addEventListener('mousedown', (e) => { isPanning = true; startX = e.clientX - posX; startY = e.clientY - posY; });
-    window.addEventListener('mousemove', (e) => {
-        if (!isPanning) return;
-        posX = e.clientX - startX; posY = e.clientY - startY;
-        updateTransform();
-    });
-    window.addEventListener('mouseup', () => { isPanning = false; });
-
-    function printReport() {
-        if (!imgElement.src || imgElement.style.display === 'none') { showToast("⚠️ 請先載入報表圖檔才能列印！"); return; }
-        document.getElementById('print-img').src = imgElement.src;
-        window.print();
-    }
-
-    window.onload = fetchListData;
-</script>
-</body>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="print-area" class="print-area" aria-hidden="true"><img id="print-image" alt="列印報表" /></div>
+    <script type="module" src="/src/pages/dashboard.js"></script>
+  </body>
 </html>

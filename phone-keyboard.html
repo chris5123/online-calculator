@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#123c69" />
+    <title>iPhone 遠端數字鍵盤</title>
+  </head>
+  <body>
+    <main class="remote-keyboard-page">
+      <section class="remote-keyboard-card" aria-labelledby="remote-keyboard-title">
+        <p class="eyebrow">Remote Keyboard</p>
+        <h1 id="remote-keyboard-title">iPhone 遠端數字鍵盤</h1>
+        <p class="remote-keyboard-description">
+          連線後，請點擊輸入欄位使用 iPhone 原生數字鍵盤。內容會傳送到電腦上的試算器。
+        </p>
+        <p class="remote-keyboard-help">
+          若從 GitHub Pages 開啟，Relay URL 必須是 wss://；區域網路測試請填入電腦的區網 IP，不要使用 localhost。
+        </p>
+        <div class="remote-keyboard-connection">
+          <label for="remote-pair-code">配對碼</label>
+          <input id="remote-pair-code" type="text" inputmode="text" maxlength="12" autocomplete="off" />
+          <label for="remote-relay-url">Relay URL</label>
+          <input
+            id="remote-relay-url"
+            type="url"
+            inputmode="url"
+            placeholder="ws://192.168.1.10:8787 or wss://relay.example.com"
+            autocomplete="off"
+          />
+          <button id="remote-connect-button" class="button button-primary" type="button">連線</button>
+        </div>
+        <div id="remote-keyboard-status" class="operation-status" data-tone="info" role="status" aria-live="polite">
+          尚未連線
+        </div>
+        <label for="remote-number-input">輸入數字</label>
+        <input
+          id="remote-number-input"
+          class="remote-keyboard-input"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          autocomplete="off"
+          disabled
+        />
+        <div class="remote-keyboard-actions">
+          <button id="remote-focus-button" class="button button-secondary" type="button" disabled>
+            開啟原生數字鍵盤
+          </button>
+          <button id="remote-clear-button" class="button button-danger" type="button" disabled>清空</button>
+          <button id="remote-tab-button" class="button button-secondary" type="button" disabled>下一欄</button>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="/src/pages/remoteKeyboard.js"></script>
+  </body>
+</html>
