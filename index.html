@@ -83,22 +83,41 @@
         .btn-blue { background-color: #bfdbfe; color: #1e3a8a; }
         .btn-green { background-color: #bbf7d0; color: #166534; }
 
-        /* 虛擬鍵盤 */
+        /* === 全新優化虛擬鍵盤佈局 === */
         .control-panel {
             position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); width: clamp(320px, 33vw, 450px); 
-            background-color: #7dd3fc; padding: 10px; border-radius: 12px; border: 2px solid #38bdf8; box-shadow: 0 8px 25px rgba(0,0,0,0.3); 
-            z-index: 9999; display: flex; flex-direction: column; gap: 10px; touch-action: none;
+            z-index: 9999; display: flex; flex-direction: column; align-items: center; touch-action: none;
+            filter: drop-shadow(0 8px 25px rgba(0,0,0,0.3));
         }
-        .cp-header { display: flex; justify-content: center; align-items: center; gap: 40px; width: 100%; cursor: grab; }
-        .cp-header:active { cursor: grabbing; }
-        .drag-indicator { width: 40px; height: 5px; background-color: #0284c7; border-radius: 3px; margin: 0 auto 8px auto; opacity: 0.5; cursor: grab; }
-        .vk-grid { display: flex; flex-direction: column; gap: 4px; width: 100%; }
-        .vk-row { display: flex; gap: 4px; width: 100%; }
-        .vk-btn, .vk-action-btn { flex: 1; background-color: #fef08a; color: #dc2626; font-weight: 900; font-size: 18px; border: 2px solid #ca8a04; border-radius: 6px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; user-select: none; box-shadow: 0 3px 0 #a16207; -webkit-tap-highlight-color: transparent; }
-        .wide-btn { flex: 1.4; }
-        .vk-action-btn { font-size: 16px; padding: 0 4px; }
-        .vk-action-btn.icon-btn { font-size: 14px; letter-spacing: -1px; }
-        .vk-btn:active, .vk-action-btn:active { transform: translateY(3px); box-shadow: 0 0 0 #a16207; }
+        /* 獨立的拖曳把手區域 (梯形突出設計) */
+        .drag-handle-tab {
+            width: 120px; height: 30px; background-color: #7dd3fc; border: 2px solid #38bdf8; border-bottom: none;
+            border-radius: 12px 12px 0 0; display: flex; justify-content: center; align-items: center; cursor: grab;
+        }
+        .drag-handle-tab:active { cursor: grabbing; }
+        .drag-indicator {
+            width: 40px; height: 6px; background-color: #0284c7; border-radius: 3px; opacity: 0.6; pointer-events: none;
+        }
+        /* 鍵盤主體 */
+        .keyboard-body {
+            width: 100%; background-color: #7dd3fc; padding: 12px; border-radius: 12px; border: 2px solid #38bdf8;
+            border-top-left-radius: 4px; border-top-right-radius: 4px; display: flex; flex-direction: column; gap: 12px;
+        }
+        
+        .cp-header { display: flex; justify-content: center; align-items: center; gap: 40px; width: 100%; }
+        
+        .vk-grid { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+        .vk-row { display: flex; gap: 6px; width: 100%; }
+        
+        /* 按鈕樣式微調：讓按鈕在缺少刪除鍵後顯得更寬裕 */
+        .vk-btn, .vk-action-btn { 
+            flex: 1; background-color: #fef08a; color: #dc2626; font-weight: 900; font-size: 20px; 
+            border: 2px solid #ca8a04; border-radius: 8px; height: 42px; cursor: pointer; 
+            display: flex; align-items: center; justify-content: center; user-select: none; 
+            box-shadow: 0 4px 0 #a16207; -webkit-tap-highlight-color: transparent; transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .vk-action-btn { font-size: 18px; }
+        .vk-btn:active, .vk-action-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #a16207; }
 
         .mode-toggle { display: flex; align-items: center; gap: 8px; background-color: white; border: 2px solid black; padding: 4px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; color: #333; transition: background-color 0.2s; user-select: none; }
         .mode-toggle.active { background-color: #bbf7d0; }
@@ -357,33 +376,37 @@
 
 <!-- 懸浮控制鍵盤 -->
 <div class="control-panel" id="draggable-panel">
-    <div class="drag-indicator"></div>
-    <div class="cp-header" id="panel-header">
-        <label class="mode-toggle" id="mode-toggle-label">
-            <input type="checkbox" id="continuous-mode" class="hidden">
-            <span class="text-2xl">⚡</span> 
-            <span>連續模式</span>
-        </label>
-        <button class="voice-btn-small" id="voice-btn" title="點擊開始語音輸入">🎙️</button>
+    <!-- 新增的獨立拖曳提把 -->
+    <div class="drag-handle-tab" id="drag-handle">
+        <div class="drag-indicator"></div>
     </div>
-    <div class="vk-grid">
-        <div class="vk-row">
-            <button class="vk-btn num-btn">1</button>
-            <button class="vk-btn num-btn">2</button>
-            <button class="vk-btn num-btn">3</button>
-            <button class="vk-btn num-btn">4</button>
-            <button class="vk-btn num-btn">5</button>
-            <button id="vk-del-left" class="vk-action-btn icon-btn wide-btn" title="倒退刪除">&lt;X</button>
-            <button id="vk-del-right" class="vk-action-btn icon-btn wide-btn" title="向右刪除">X&gt;</button>
+    
+    <div class="keyboard-body">
+        <div class="cp-header">
+            <label class="mode-toggle" id="mode-toggle-label">
+                <input type="checkbox" id="continuous-mode" class="hidden">
+                <span class="text-2xl">⚡</span> 
+                <span>連續模式</span>
+            </label>
+            <button class="voice-btn-small" id="voice-btn" title="點擊開始語音輸入">🎙️</button>
         </div>
-        <div class="vk-row">
-            <button class="vk-btn num-btn">6</button>
-            <button class="vk-btn num-btn">7</button>
-            <button class="vk-btn num-btn">8</button>
-            <button class="vk-btn num-btn">9</button>
-            <button class="vk-btn num-btn">0</button>
-            <button id="vk-tab" class="vk-action-btn wide-btn" style="font-size: 18px;">tab</button>
-            <button id="vk-clear" class="vk-action-btn wide-btn" style="font-size: 16px;">清空</button>
+        <div class="vk-grid">
+            <div class="vk-row">
+                <button class="vk-btn num-btn">1</button>
+                <button class="vk-btn num-btn">2</button>
+                <button class="vk-btn num-btn">3</button>
+                <button class="vk-btn num-btn">4</button>
+                <button class="vk-btn num-btn">5</button>
+                <button id="vk-tab" class="vk-action-btn" style="font-size: 18px;">tab</button>
+            </div>
+            <div class="vk-row">
+                <button class="vk-btn num-btn">6</button>
+                <button class="vk-btn num-btn">7</button>
+                <button class="vk-btn num-btn">8</button>
+                <button class="vk-btn num-btn">9</button>
+                <button class="vk-btn num-btn">0</button>
+                <button id="vk-clear" class="vk-action-btn" style="font-size: 16px;">清空</button>
+            </div>
         </div>
     </div>
 </div>
@@ -622,11 +645,12 @@
         }
     }
 
-    // === 虛擬鍵盤拖曳修復 ===
+    // === 虛擬鍵盤拖曳修復 (更新對應新的提把) ===
     let isDraggingPanel = false;
     let pStartX, pStartY, initialLeft, initialTop;
     const draggablePanel = document.getElementById('draggable-panel');
-    const dragHandles = [document.getElementById('panel-header'), document.querySelector('.drag-indicator')];
+    // 現在僅限點擊新的拖曳提把才能拖動鍵盤
+    const dragHandles = [document.getElementById('drag-handle')];
 
     dragHandles.forEach(handle => {
         if(!handle) return;
@@ -793,42 +817,6 @@
             currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
         });
     });
-
-    if(document.getElementById('vk-del-left')) {
-        document.getElementById('vk-del-left').addEventListener('click', (e) => {
-            e.preventDefault();
-            if (!currentFocusedInput) return;
-            let currentVal = currentFocusedInput.value;
-            let start = (currentFocusedInput.selectionStart !== null && currentFocusedInput.selectionStart !== undefined) ? currentFocusedInput.selectionStart : currentVal.length;
-            let end = (currentFocusedInput.selectionEnd !== null && currentFocusedInput.selectionEnd !== undefined) ? currentFocusedInput.selectionEnd : currentVal.length;
-            if (start === end && start > 0) {
-                currentFocusedInput.value = currentVal.slice(0, start - 1) + currentVal.slice(start);
-                try { currentFocusedInput.setSelectionRange(start - 1, start - 1); } catch(err) {}
-            } else if (start !== end) {
-                currentFocusedInput.value = currentVal.slice(0, start) + currentVal.slice(end);
-                try { currentFocusedInput.setSelectionRange(start, start); } catch(err) {}
-            }
-            currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
-        });
-    }
-
-    if(document.getElementById('vk-del-right')) {
-        document.getElementById('vk-del-right').addEventListener('click', (e) => {
-            e.preventDefault();
-            if (!currentFocusedInput) return;
-            let currentVal = currentFocusedInput.value;
-            let start = (currentFocusedInput.selectionStart !== null && currentFocusedInput.selectionStart !== undefined) ? currentFocusedInput.selectionStart : currentVal.length;
-            let end = (currentFocusedInput.selectionEnd !== null && currentFocusedInput.selectionEnd !== undefined) ? currentFocusedInput.selectionEnd : currentVal.length;
-            if (start === end && start < currentVal.length) {
-                currentFocusedInput.value = currentVal.slice(0, start) + currentVal.slice(start + 1);
-                try { currentFocusedInput.setSelectionRange(start, start); } catch(err) {}
-            } else if (start !== end) {
-                currentFocusedInput.value = currentVal.slice(0, start) + currentVal.slice(end);
-                try { currentFocusedInput.setSelectionRange(start, start); } catch(err) {}
-            }
-            currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
-        });
-    }
     
     if(document.getElementById('vk-clear')) {
         document.getElementById('vk-clear').addEventListener('click', (e) => {
